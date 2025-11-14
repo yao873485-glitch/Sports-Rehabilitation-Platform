@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.ChatMessageMapper">
+
+    <!-- 分页查询聊天消息列表 -->
+    <select id="selectChatMessagePage" resultType="com.rehabilitation.dto.ChatMessageVO">
+        SELECT 
+            id,
+            conversation_id AS conversationId,
+            sender_type AS senderType,
+            sender_id AS senderId,
+            sender_name AS senderName,
+            receiver_id AS receiverId,
+            content,
+            message_type AS messageType,
+            is_read AS isRead,
+            send_time AS sendTime
+        FROM chat_message
+        <where>
+            <if test="query.conversationId != null and query.conversationId != ''">
+                AND conversation_id = #{query.conversationId}
+            </if>
+            <if test="query.patientId != null">
+                AND (sender_id = #{query.patientId} OR receiver_id = #{query.patientId})
+            </if>
+            <if test="query.doctorId != null">
+                AND (sender_id = #{query.doctorId} OR receiver_id = #{query.doctorId})
+            </if>
+        </where>
+        ORDER BY send_time DESC
+    </select>
+
+</mapper>

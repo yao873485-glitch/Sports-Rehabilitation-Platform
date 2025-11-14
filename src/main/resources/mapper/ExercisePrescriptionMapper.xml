@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.ExercisePrescriptionMapper">
+
+    <resultMap id="BaseResultMap" type="com.rehabilitation.entity.ExercisePrescription">
+        <id column="id" property="id"/>
+        <result column="disease_type" property="diseaseType"/>
+        <result column="exercise_method" property="exerciseMethod"/>
+        <result column="exercise_type" property="exerciseType"/>
+        <result column="action_diagram" property="actionDiagram"/>
+        <result column="precautions" property="precautions"/>
+        <result column="progression_level" property="progressionLevel"/>
+        <result column="exercise_scene" property="exerciseScene"/>
+        <result column="status" property="status"/>
+        <result column="last_operation_time" property="lastOperationTime"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 分页查询运动处方列表 -->
+    <select id="selectExercisePrescriptionPage" resultMap="BaseResultMap">
+        SELECT * FROM exercise_prescription
+        <where>
+            <if test="query.diseaseType != null and query.diseaseType != '' and query.diseaseType != '全部'">
+                AND disease_type = #{query.diseaseType}
+            </if>
+            <if test="query.status != null and query.status != '' and query.status != '全部'">
+                AND status = #{query.status}
+            </if>
+            <if test="query.exerciseMethod != null and query.exerciseMethod != ''">
+                AND exercise_method LIKE CONCAT('%', #{query.exerciseMethod}, '%')
+            </if>
+            <if test="query.exerciseType != null and query.exerciseType != '' and query.exerciseType != '全部'">
+                AND exercise_type = #{query.exerciseType}
+            </if>
+            <if test="query.startTime != null">
+                AND created_time >= #{query.startTime}
+            </if>
+            <if test="query.endTime != null">
+                AND created_time &lt;= #{query.endTime}
+            </if>
+        </where>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 查询所有病种类型 -->
+    <select id="selectAllDiseaseTypes" resultType="string">
+        SELECT DISTINCT disease_type FROM exercise_prescription
+        WHERE disease_type IS NOT NULL AND disease_type != ''
+        ORDER BY disease_type
+    </select>
+
+    <!-- 批量更新运动处方状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE exercise_prescription
+        SET status = #{status},
+            last_operation_time = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

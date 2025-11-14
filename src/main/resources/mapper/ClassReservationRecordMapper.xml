@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.ClassReservationRecordMapper">
+
+    <!-- 分页查询课程预约记录列表 -->
+    <select id="selectReservationPage" resultType="com.rehabilitation.dto.ReservationVO">
+        SELECT 
+            id,
+            reservation_date AS reservationDate,
+            reserved_by AS reservedBy,
+            classroom_name AS classroomName,
+            exercise_type AS exerciseType,
+            patient_name AS patientName,
+            gender,
+            age,
+            medical_record_number AS medicalRecordNumber,
+            created_time AS createdTime,
+            reservation_status AS reservationStatus
+        FROM class_reservation_record
+        <where>
+            <if test="query.customerName != null and query.customerName != ''">
+                AND patient_name LIKE CONCAT('%', #{query.customerName}, '%')
+            </if>
+            <if test="query.classroomName != null and query.classroomName != ''">
+                AND classroom_name = #{query.classroomName}
+            </if>
+            <if test="query.reservationStatus != null and query.reservationStatus != ''">
+                AND reservation_status = #{query.reservationStatus}
+            </if>
+            <if test="query.startDate != null">
+                AND reservation_date &gt;= #{query.startDate}
+            </if>
+            <if test="query.endDate != null">
+                AND reservation_date &lt;= #{query.endDate}
+            </if>
+        </where>
+        ORDER BY reservation_date DESC
+    </select>
+
+</mapper>

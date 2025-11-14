@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.PatientExercisePrescriptionMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="PatientExercisePrescriptionVOMap" type="com.rehabilitation.dto.PatientExercisePrescriptionVO">
+        <id column="id" property="id"/>
+        <result column="prescription_name" property="prescriptionName"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="gender" property="gender"/>
+        <result column="age" property="age"/>
+        <result column="birth_date" property="birthDate"/>
+        <result column="medical_record_number" property="medicalRecordNumber"/>
+        <result column="disease_type" property="diseaseType"/>
+        <result column="enrollment_institution" property="enrollmentInstitution"/>
+        <result column="execution_institution" property="executionInstitution"/>
+        <result column="prescription_status" property="prescriptionStatus"/>
+        <result column="prescribing_doctor" property="prescribingDoctor"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 分页查询患者运动处方列表 -->
+    <select id="selectPatientExercisePrescriptionPage" resultMap="PatientExercisePrescriptionVOMap">
+        SELECT
+            pep.id,
+            pep.prescription_name,
+            p.name as patient_name,
+            p.gender,
+            TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age,
+            p.birth_date,
+            p.medical_record_no as medical_record_number,
+            p.disease_type,
+            p.enrollment_institution,
+            pep.execution_institution,
+            pep.prescription_status,
+            pep.prescribing_doctor,
+            pep.created_time,
+            pep.updated_time
+        FROM patient_exercise_prescription pep
+        LEFT JOIN patient p ON pep.patient_id = p.id
+        <where>
+            <if test="query.diseaseType != null and query.diseaseType != ''">
+                AND p.disease_type = #{query.diseaseType}
+            </if>
+            <if test="query.prescriptionStatus != null and query.prescriptionStatus != ''">
+                AND pep.prescription_status = #{query.prescriptionStatus}
+            </if>
+            <if test="query.enrollmentInstitution != null and query.enrollmentInstitution != ''">
+                AND p.enrollment_institution = #{query.enrollmentInstitution}
+            </if>
+            <if test="query.executionInstitution != null and query.executionInstitution != ''">
+                AND pep.execution_institution = #{query.executionInstitution}
+            </if>
+            <if test="query.prescribingDoctor != null and query.prescribingDoctor != ''">
+                AND pep.prescribing_doctor LIKE CONCAT('%', #{query.prescribingDoctor}, '%')
+            </if>
+            <if test="query.searchKeyword != null and query.searchKeyword != ''">
+                AND (p.name LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                     OR p.medical_record_no LIKE CONCAT('%', #{query.searchKeyword}, '%'))
+            </if>
+        </where>
+        ORDER BY pep.created_time DESC
+    </select>
+
+    <!-- 根据ID查询患者运动处方详情 -->
+    <select id="selectPatientExercisePrescriptionById" resultMap="PatientExercisePrescriptionVOMap">
+        SELECT
+            pep.id,
+            pep.prescription_name,
+            p.name as patient_name,
+            p.gender,
+            TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age,
+            p.birth_date,
+            p.medical_record_no as medical_record_number,
+            p.disease_type,
+            p.enrollment_institution,
+            pep.execution_institution,
+            pep.prescription_status,
+            pep.prescribing_doctor,
+            pep.created_time,
+            pep.updated_time
+        FROM patient_exercise_prescription pep
+        LEFT JOIN patient p ON pep.patient_id = p.id
+        WHERE pep.id = #{id}
+    </select>
+
+</mapper>

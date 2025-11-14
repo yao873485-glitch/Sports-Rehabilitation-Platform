@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.EduContentRepositoryMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="EduContentVOMap" type="com.rehabilitation.dto.EduContentVO">
+        <id column="id" property="id"/>
+        <result column="content_title" property="contentTitle"/>
+        <result column="content_id" property="contentId"/>
+        <result column="article_description" property="articleDescription"/>
+        <result column="category_section" property="categorySection"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="author" property="author"/>
+        <result column="publish_time" property="publishTime"/>
+        <result column="content_status" property="contentStatus"/>
+    </resultMap>
+
+    <!-- 分页查询教育内容 -->
+    <select id="selectEduContentPage" resultMap="EduContentVOMap">
+        SELECT
+            id,
+            content_title,
+            content_id,
+            article_description,
+            category_section,
+            view_count,
+            like_count,
+            author,
+            publish_time,
+            content_status
+        FROM edu_content_repository
+        <where>
+            <if test="dto.contentTitle != null and dto.contentTitle != ''">
+                AND content_title LIKE CONCAT('%', #{dto.contentTitle}, '%')
+            </if>
+            <if test="dto.author != null and dto.author != ''">
+                AND author LIKE CONCAT('%', #{dto.author}, '%')
+            </if>
+            <if test="dto.categorySection != null and dto.categorySection != ''">
+                AND category_section = #{dto.categorySection}
+            </if>
+            <if test="dto.contentStatus != null and dto.contentStatus != ''">
+                AND content_status = #{dto.contentStatus}
+            </if>
+            <if test="dto.publishStartTime != null and dto.publishStartTime != ''">
+                AND DATE(publish_time) >= #{dto.publishStartTime}
+            </if>
+            <if test="dto.publishEndTime != null and dto.publishEndTime != ''">
+                AND DATE(publish_time) &lt;= #{dto.publishEndTime}
+            </if>
+        </where>
+        ORDER BY publish_time DESC
+    </select>
+
+    <!-- 根据ID查询教育内容详情 -->
+    <select id="selectEduContentById" resultMap="EduContentVOMap">
+        SELECT
+            id,
+            content_title,
+            content_id,
+            article_description,
+            category_section,
+            view_count,
+            like_count,
+            author,
+            publish_time,
+            content_status
+        FROM edu_content_repository
+        WHERE id = #{id}
+    </select>
+
+</mapper>

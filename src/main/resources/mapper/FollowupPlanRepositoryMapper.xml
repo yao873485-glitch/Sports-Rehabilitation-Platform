@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.FollowupPlanRepositoryMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="FollowupPlanVOMap" type="com.rehabilitation.dto.FollowupPlanVO">
+        <id column="id" property="id"/>
+        <result column="plan_name" property="planName"/>
+        <result column="linked_project" property="linkedProject"/>
+        <result column="version_number" property="versionNumber"/>
+        <result column="status" property="status"/>
+        <result column="last_modified_time" property="lastModifiedTime"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="version_remark" property="versionRemark"/>
+        <result column="invitation_qr_code_url" property="invitationQrCodeUrl"/>
+    </resultMap>
+
+    <!-- 分页查询随访计划 -->
+    <select id="selectFollowupPlanPage" resultMap="FollowupPlanVOMap">
+        SELECT
+            id,
+            plan_name,
+            linked_project,
+            version_number,
+            status,
+            last_modified_time,
+            created_time,
+            version_remark,
+            invitation_qr_code_url
+        FROM followup_plan_repository
+        <where>
+            <if test="dto.planName != null and dto.planName != ''">
+                AND plan_name LIKE CONCAT('%', #{dto.planName}, '%')
+            </if>
+            <if test="dto.status != null and dto.status != ''">
+                AND status = #{dto.status}
+            </if>
+        </where>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据ID查询随访计划详情 -->
+    <select id="selectFollowupPlanById" resultMap="FollowupPlanVOMap">
+        SELECT
+            id,
+            plan_name,
+            linked_project,
+            version_number,
+            status,
+            last_modified_time,
+            created_time,
+            version_remark,
+            invitation_qr_code_url
+        FROM followup_plan_repository
+        WHERE id = #{id}
+    </select>
+
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.ClassroomFacilityMapper">
+
+    <resultMap id="BaseResultMap" type="com.rehabilitation.entity.ClassroomFacilityInfo">
+        <id column="id" property="id"/>
+        <result column="exercise_type" property="exerciseType"/>
+        <result column="classroom_name" property="classroomName"/>
+        <result column="class_duration" property="classDuration"/>
+        <result column="reservation_limit" property="reservationLimit"/>
+        <result column="status" property="status"/>
+        <result column="last_operation_time" property="lastOperationTime"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <resultMap id="VOResultMap" type="com.rehabilitation.dto.ClassroomFacilityVO">
+        <id column="id" property="id"/>
+        <result column="exercise_type" property="exerciseType"/>
+        <result column="classroom_name" property="classroomName"/>
+        <result column="class_duration" property="classDuration"/>
+        <result column="reservation_limit" property="reservationLimit"/>
+        <result column="status" property="status"/>
+        <result column="last_operation_time" property="lastOperationTime"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 分页查询教室设施信息 -->
+    <select id="selectClassroomFacilityPage" resultMap="VOResultMap">
+        SELECT
+            id,
+            exercise_type,
+            classroom_name,
+            class_duration,
+            reservation_limit,
+            status,
+            last_operation_time,
+            created_time
+        FROM classroom_facility_info
+        <where>
+            <if test="query.searchKeyword != null and query.searchKeyword != ''">
+                AND classroom_name LIKE CONCAT('%', #{query.searchKeyword}, '%')
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND status = #{query.status}
+            </if>
+        </where>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据ID查询教室设施详情 -->
+    <select id="selectClassroomFacilityById" resultMap="VOResultMap">
+        SELECT
+            id,
+            exercise_type,
+            classroom_name,
+            class_duration,
+            reservation_limit,
+            status,
+            last_operation_time,
+            created_time
+        FROM classroom_facility_info
+        WHERE id = #{id}
+    </select>
+
+</mapper>

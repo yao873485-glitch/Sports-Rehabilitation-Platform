@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.MedicalSchemeMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.rehabilitation.entity.MedicalScheme">
+        <id column="id" property="id"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="scheme_id" property="schemeId"/>
+        <result column="doctor_name" property="doctorName"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="create_date" property="createDate"/>
+    </resultMap>
+
+    <!-- 分页查询医疗方案列表 -->
+    <select id="selectMedicalSchemePage" resultMap="BaseResultMap">
+        SELECT
+            ms.id,
+            ms.patient_id,
+            ms.scheme_id,
+            ms.doctor_name,
+            ms.status,
+            ms.create_time,
+            ms.end_time,
+            ms.create_date,
+            p.name as patient_name,
+            p.gender,
+            p.birth_date,
+            p.medical_record_no as archive_no,
+            p.disease_type
+        FROM medical_scheme ms
+        INNER JOIN patient p ON ms.patient_id = p.id
+        <where>
+            <if test="query.startTime != null">
+                AND ms.create_time >= #{query.startTime}
+            </if>
+            <if test="query.endTime != null">
+                AND ms.create_time &lt;= #{query.endTime}
+            </if>
+            <if test="query.startDate != null">
+                AND ms.create_date >= #{query.startDate}
+            </if>
+            <if test="query.endDate != null">
+                AND ms.create_date &lt;= #{query.endDate}
+            </if>
+            <if test="query.diseaseType != null and query.diseaseType != ''">
+                AND p.disease_type = #{query.diseaseType}
+            </if>
+            <if test="query.doctorName != null and query.doctorName != ''">
+                AND ms.doctor_name LIKE CONCAT('%', #{query.doctorName}, '%')
+            </if>
+            <if test="query.searchKeyword != null and query.searchKeyword != ''">
+                AND (p.name LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                OR p.medical_record_no LIKE CONCAT('%', #{query.searchKeyword}, '%'))
+            </if>
+            <if test="query.status != null">
+                AND ms.status = #{query.status}
+            </if>
+        </where>
+        ORDER BY ms.create_time DESC
+    </select>
+
+    <!-- 统计患者执行中的方案数量（通过档案号） -->
+    <select id="countActiveSchemeByMedicalRecordNo" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM medical_scheme ms
+        INNER JOIN patient p ON ms.patient_id = p.id
+        WHERE p.medical_record_no = #{medicalRecordNo}
+          AND ms.status = 1
+    </select>
+
+</mapper>

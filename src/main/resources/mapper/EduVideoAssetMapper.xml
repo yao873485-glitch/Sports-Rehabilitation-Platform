@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.EduVideoAssetMapper">
+
+    <!-- 分页查询教育视频素材 -->
+    <select id="selectEduVideoPage" resultType="com.rehabilitation.dto.EduVideoVO">
+        SELECT
+            id,
+            video_title AS videoTitle,
+            video_id AS videoId,
+            video_description AS videoDescription,
+            category_section AS categorySection,
+            view_count AS viewCount,
+            like_count AS likeCount,
+            author,
+            publish_time AS publishTime,
+            content_status AS contentStatus
+        FROM edu_video_asset
+        <where>
+            <if test="queryDTO.publishStartTime != null and queryDTO.publishStartTime != ''">
+                AND DATE(publish_time) &gt;= #{queryDTO.publishStartTime}
+            </if>
+            <if test="queryDTO.publishEndTime != null and queryDTO.publishEndTime != ''">
+                AND DATE(publish_time) &lt;= #{queryDTO.publishEndTime}
+            </if>
+            <if test="queryDTO.videoTitle != null and queryDTO.videoTitle != ''">
+                AND video_title LIKE CONCAT('%', #{queryDTO.videoTitle}, '%')
+            </if>
+            <if test="queryDTO.author != null and queryDTO.author != ''">
+                AND author LIKE CONCAT('%', #{queryDTO.author}, '%')
+            </if>
+            <if test="queryDTO.categorySection != null and queryDTO.categorySection != ''">
+                AND category_section = #{queryDTO.categorySection}
+            </if>
+            <if test="queryDTO.contentStatus != null and queryDTO.contentStatus != ''">
+                AND content_status = #{queryDTO.contentStatus}
+            </if>
+        </where>
+        ORDER BY id DESC
+    </select>
+
+    <!-- 根据ID查询教育视频素材详情 -->
+    <select id="selectEduVideoById" resultType="com.rehabilitation.dto.EduVideoVO">
+        SELECT
+            id,
+            video_title AS videoTitle,
+            video_id AS videoId,
+            video_description AS videoDescription,
+            category_section AS categorySection,
+            view_count AS viewCount,
+            like_count AS likeCount,
+            author,
+            publish_time AS publishTime,
+            content_status AS contentStatus
+        FROM edu_video_asset
+        WHERE id = #{id}
+    </select>
+
+</mapper>

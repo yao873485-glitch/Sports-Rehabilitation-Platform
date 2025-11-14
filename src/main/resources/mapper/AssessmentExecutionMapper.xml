@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.AssessmentExecutionMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="AssessmentExecutionVOMap" type="com.rehabilitation.dto.AssessmentExecutionVO">
+        <id column="id" property="id"/>
+        <result column="assessment_name" property="assessmentName"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="gender" property="gender"/>
+        <result column="age" property="age"/>
+        <result column="medical_record_number" property="medicalRecordNumber"/>
+        <result column="disease_type" property="diseaseType"/>
+        <result column="enrollment_institution" property="enrollmentInstitution"/>
+        <result column="execution_institution" property="executionInstitution"/>
+        <result column="status" property="status"/>
+        <result column="prescribing_doctor" property="prescribingDoctor"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 分页查询评定执行列表 -->
+    <select id="selectAssessmentExecutionPage" resultMap="AssessmentExecutionVOMap">
+        SELECT
+            aer.id,
+            pap.assessment_name,
+            p.name as patient_name,
+            p.gender,
+            TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age,
+            p.medical_record_no as medical_record_number,
+            p.disease_type,
+            p.enrollment_institution,
+            aer.execution_institution,
+            aer.status,
+            aer.prescribing_doctor,
+            aer.created_time,
+            aer.updated_time
+        FROM assessment_execution_record aer
+        LEFT JOIN patient_assessment_plan pap ON aer.assessment_plan_id = pap.id
+        LEFT JOIN patient p ON aer.patient_id = p.id
+        <where>
+            <if test="query.diseaseType != null and query.diseaseType != ''">
+                AND p.disease_type = #{query.diseaseType}
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND aer.status = #{query.status}
+            </if>
+            <if test="query.enrollmentInstitution != null and query.enrollmentInstitution != ''">
+                AND p.enrollment_institution = #{query.enrollmentInstitution}
+            </if>
+            <if test="query.executionInstitution != null and query.executionInstitution != ''">
+                AND aer.execution_institution = #{query.executionInstitution}
+            </if>
+            <if test="query.searchKeyword != null and query.searchKeyword != ''">
+                AND (
+                    p.name LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                    OR p.medical_record_no LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY aer.created_time DESC
+    </select>
+
+    <!-- 根据ID查询评定执行详情 -->
+    <select id="selectAssessmentExecutionById" resultMap="AssessmentExecutionVOMap">
+        SELECT
+            aer.id,
+            pap.assessment_name,
+            p.name as patient_name,
+            p.gender,
+            TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age,
+            p.medical_record_no as medical_record_number,
+            p.disease_type,
+            p.enrollment_institution,
+            aer.execution_institution,
+            aer.status,
+            aer.prescribing_doctor,
+            aer.created_time,
+            aer.updated_time
+        FROM assessment_execution_record aer
+        LEFT JOIN patient_assessment_plan pap ON aer.assessment_plan_id = pap.id
+        LEFT JOIN patient p ON aer.patient_id = p.id
+        WHERE aer.id = #{id}
+    </select>
+
+</mapper>

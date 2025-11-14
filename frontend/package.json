@@ -1,0 +1,45 @@
+{
+  "name": "rehabilitation-platform-frontend",
+  "version": "1.0.0",
+  "description": "运动康复医疗管理平台前端",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@stomp/stompjs": "^7.2.0",
+    "axios": "^1.4.0",
+    "echarts": "^5.4.2",
+    "element-ui": "^2.15.13",
+    "js-cookie": "^3.0.5",
+    "moment": "^2.29.4",
+    "path-browserify": "^1.0.1",
+    "socket.io-client": "^4.7.1",
+    "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
+    "vue": "^2.6.14",
+    "vue-router": "^3.5.4",
+    "vuex": "^3.6.2"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-vuex": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "@vue/eslint-config-standard": "^6.1.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.2.0",
+    "eslint-plugin-vue": "^7.20.0",
+    "sass": "^1.62.1",
+    "sass-loader": "^13.2.2",
+    "vue-template-compiler": "^2.6.14"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

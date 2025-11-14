@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.FollowupPatientEnrollmentMapper">
+
+    <!-- 插入入组记录 -->
+    <insert id="insertEnrollment" parameterType="map" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO followup_patient_enrollment (
+            serial_number,
+            patient_id,
+            followup_plan_id,
+            followup_project_id,
+            followup_team,
+            primary_doctor,
+            health_manager,
+            application_time,
+            enrollment_time,
+            followup_status,
+            enrollment_remark,
+            created_by,
+            created_time,
+            updated_time
+        ) VALUES (
+            #{serialNumber},
+            #{patientId},
+            #{followupPlanId},
+            #{followupProjectId},
+            #{followupTeam},
+            #{primaryDoctor},
+            #{healthManager},
+            #{applicationTime},
+            #{enrollmentTime},
+            #{followupStatus},
+            #{enrollmentRemark},
+            #{createdBy},
+            #{createdTime},
+            #{updatedTime}
+        )
+    </insert>
+
+</mapper>

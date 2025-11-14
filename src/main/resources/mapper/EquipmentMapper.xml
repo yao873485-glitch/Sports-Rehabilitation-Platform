@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.EquipmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.rehabilitation.entity.Equipment">
+        <id column="id" property="id"/>
+        <result column="serial_number" property="serialNumber"/>
+        <result column="region" property="region"/>
+        <result column="equipment_name" property="equipmentName"/>
+        <result column="equipment_type" property="equipmentType"/>
+        <result column="equipment_code" property="equipmentCode"/>
+        <result column="status" property="status"/>
+        <result column="last_operation_time" property="lastOperationTime"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 分页查询设备列表 -->
+    <select id="selectEquipmentPage" resultMap="BaseResultMap">
+        SELECT * FROM equipment
+        <where>
+            <if test="query.equipmentName != null and query.equipmentName != ''">
+                AND equipment_name LIKE CONCAT('%', #{query.equipmentName}, '%')
+            </if>
+            <if test="query.equipmentType != null and query.equipmentType != '' and query.equipmentType != '全部'">
+                AND equipment_type = #{query.equipmentType}
+            </if>
+            <if test="query.status != null and query.status != '' and query.status != '全部'">
+                AND status = #{query.status}
+            </if>
+            <if test="query.startTime != null">
+                AND created_time >= #{query.startTime}
+            </if>
+            <if test="query.endTime != null">
+                AND created_time &lt;= #{query.endTime}
+            </if>
+        </where>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 查询所有设备类型 -->
+    <select id="selectAllEquipmentTypes" resultType="string">
+        SELECT DISTINCT equipment_type FROM equipment WHERE equipment_type IS NOT NULL AND equipment_type != ''
+        ORDER BY equipment_type
+    </select>
+
+    <!-- 批量更新设备状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE equipment
+        SET status = #{status},
+            last_operation_time = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 查询最大序号 -->
+    <select id="selectMaxSerialNumber" resultType="java.lang.Integer">
+        SELECT MAX(serial_number) FROM equipment
+    </select>
+
+</mapper>

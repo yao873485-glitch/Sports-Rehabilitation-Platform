@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.SharedFileMapper">
+
+    <!-- 分页查询共享文件列表 -->
+    <select id="selectSharedFilePage" resultType="com.rehabilitation.dto.SharedFileVO">
+        SELECT 
+            id,
+            patient_id AS patientId,
+            patient_name AS patientName,
+            file_name AS fileName,
+            file_type AS fileType,
+            file_url AS fileUrl,
+            upload_by AS uploadBy,
+            upload_time AS uploadTime,
+            download_count AS downloadCount
+        FROM shared_file
+        <where>
+            <if test="query.patientId != null">
+                AND patient_id = #{query.patientId}
+            </if>
+            <if test="query.patientName != null and query.patientName != ''">
+                AND patient_name LIKE CONCAT('%', #{query.patientName}, '%')
+            </if>
+            <if test="query.fileName != null and query.fileName != ''">
+                AND file_name LIKE CONCAT('%', #{query.fileName}, '%')
+            </if>
+            <if test="query.fileType != null and query.fileType != ''">
+                AND file_type = #{query.fileType}
+            </if>
+            <if test="query.uploadStartTime != null">
+                AND upload_time &gt;= #{query.uploadStartTime}
+            </if>
+            <if test="query.uploadEndTime != null">
+                AND upload_time &lt;= #{query.uploadEndTime}
+            </if>
+        </where>
+        ORDER BY upload_time DESC
+    </select>
+
+</mapper>

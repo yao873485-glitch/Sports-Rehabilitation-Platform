@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.PrescriptionExecutionMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="PrescriptionExecutionVOMap" type="com.rehabilitation.dto.PrescriptionExecutionVO">
+        <id column="id" property="id"/>
+        <result column="prescription_name" property="prescriptionName"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="gender" property="gender"/>
+        <result column="age" property="age"/>
+        <result column="birth_date" property="birthDate"/>
+        <result column="medical_record_number" property="medicalRecordNumber"/>
+        <result column="disease_type" property="diseaseType"/>
+        <result column="enrollment_institution" property="enrollmentInstitution"/>
+        <result column="execution_institution" property="executionInstitution"/>
+        <result column="prescription_status" property="prescriptionStatus"/>
+        <result column="prescribing_doctor" property="prescribingDoctor"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 分页查询处方执行列表 -->
+    <select id="selectPrescriptionExecutionPage" resultMap="PrescriptionExecutionVOMap">
+        SELECT
+            ppe.id,
+            pep.prescription_name,
+            pt.name as patient_name,
+            pt.gender,
+            TIMESTAMPDIFF(YEAR, pt.birth_date, CURDATE()) as age,
+            pt.birth_date,
+            pt.medical_record_no as medical_record_number,
+            pt.disease_type,
+            pt.enrollment_institution,
+            ppe.execution_institution,
+            ppe.prescription_status,
+            ppe.prescribing_doctor,
+            ppe.created_time
+        FROM patient_prescribed_exercise ppe
+        LEFT JOIN patient_exercise_prescription pep ON ppe.exercise_prescription_id = pep.id
+        LEFT JOIN patient pt ON ppe.patient_id = pt.id
+        <where>
+            <if test="query.diseaseType != null and query.diseaseType != ''">
+                AND pt.disease_type = #{query.diseaseType}
+            </if>
+            <if test="query.prescriptionStatus != null and query.prescriptionStatus != ''">
+                AND ppe.prescription_status = #{query.prescriptionStatus}
+            </if>
+            <if test="query.enrollmentInstitution != null and query.enrollmentInstitution != ''">
+                AND pt.enrollment_institution = #{query.enrollmentInstitution}
+            </if>
+            <if test="query.executionInstitution != null and query.executionInstitution != ''">
+                AND ppe.execution_institution = #{query.executionInstitution}
+            </if>
+            <if test="query.searchKeyword != null and query.searchKeyword != ''">
+                AND (
+                    pt.name LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                    OR pt.medical_record_no LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY ppe.created_time DESC
+    </select>
+
+    <!-- 根据ID查询处方执行详情 -->
+    <select id="selectPrescriptionExecutionById" resultMap="PrescriptionExecutionVOMap">
+        SELECT
+            ppe.id,
+            pep.prescription_name,
+            pt.name as patient_name,
+            pt.gender,
+            TIMESTAMPDIFF(YEAR, pt.birth_date, CURDATE()) as age,
+            pt.birth_date,
+            pt.medical_record_no as medical_record_number,
+            pt.disease_type,
+            pt.enrollment_institution,
+            ppe.execution_institution,
+            ppe.prescription_status,
+            ppe.prescribing_doctor,
+            ppe.created_time,
+            ppe.updated_time
+        FROM patient_prescribed_exercise ppe
+        LEFT JOIN patient_exercise_prescription pep ON ppe.exercise_prescription_id = pep.id
+        LEFT JOIN patient pt ON ppe.patient_id = pt.id
+        WHERE ppe.id = #{id}
+    </select>
+
+</mapper>

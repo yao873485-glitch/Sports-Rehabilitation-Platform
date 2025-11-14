@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.PatientPrescribedExerciseMapper">
+
+    <!-- 分页查询运动处方列表 -->
+    <select id="selectPrescriptionPage" resultType="com.rehabilitation.dto.PrescriptionVO">
+        SELECT 
+            id,
+            prescription_name AS prescriptionName,
+            patient_name AS patientName,
+            gender,
+            age,
+            medical_record_number AS medicalRecordNumber,
+            disease_type AS diseaseType,
+            enrollment_institution AS enrollmentInstitution,
+            execution_institution AS executionInstitution,
+            prescription_status AS prescriptionStatus,
+            prescribing_doctor AS prescribingDoctor,
+            created_time AS createdTime
+        FROM patient_prescribed_exercise
+        <where>
+            <if test="query.diseaseType != null and query.diseaseType != ''">
+                AND disease_type = #{query.diseaseType}
+            </if>
+            <if test="query.prescriptionStatus != null and query.prescriptionStatus != ''">
+                AND prescription_status = #{query.prescriptionStatus}
+            </if>
+            <if test="query.enrollmentInstitution != null and query.enrollmentInstitution != ''">
+                AND enrollment_institution = #{query.enrollmentInstitution}
+            </if>
+            <if test="query.executionInstitution != null and query.executionInstitution != ''">
+                AND execution_institution = #{query.executionInstitution}
+            </if>
+            <if test="query.searchKeyword != null and query.searchKeyword != ''">
+                AND (
+                    patient_name LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                    OR medical_record_number LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY created_time DESC
+    </select>
+
+</mapper>
