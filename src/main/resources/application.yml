@@ -121,7 +121,7 @@ rehabilitation:
     endpoint: https://oss-cn-beijing.aliyuncs.com
     bucket-name: sports-rehabilitation
     region: cn-beijing
-    access-key-id: YOUR_ACCESS_KEY_ID_REPLACED  # 请替换为实际的AccessKeyId
-    access-key-secret: YOUR_ACCESS_KEY_SECRET_REPLACED  # 请替换为实际的AccessKeySecret
+    access-key-id: ${OSS_ACCESS_KEY_ID:your-access-key-id}  # 请替换为实际的AccessKeyId
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:your-access-key-secret}  # 请替换为实际的AccessKeySecret
     base-url: https://sports-rehabilitation.oss-cn-beijing.aliyuncs.com  # OSS访问域名
     folder: exercise-images/  # 图片存储文件夹
