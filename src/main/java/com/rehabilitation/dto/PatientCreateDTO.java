@@ -1,13 +1,11 @@
 package com.rehabilitation.dto;
 
-import lombok.Data;
-
 import java.time.LocalDate;
 
 /**
  * 患者创建DTO - 用于接收前端提交的完整患者信息
+ * 注意：由于Lombok在本项目中存在编译问题，手动添加getter/setter方法
  */
-@Data
 public class PatientCreateDTO {
 
     // ========== 基本信息 ==========
@@ -101,4 +99,150 @@ public class PatientCreateDTO {
      * 居住地址
      */
     private String address;
+
+    // ========== 手动添加的 Getter 和 Setter 方法 ==========
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getIdCardType() {
+        return idCardType;
+    }
+
+    public void setIdCardType(String idCardType) {
+        this.idCardType = idCardType;
+    }
+
+    public String getIdCard() {
+        return idCard;
+    }
+
+    public void setIdCard(String idCard) {
+        this.idCard = idCard;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public Integer getHeight() {
+        return height;
+    }
+
+    public void setHeight(Integer height) {
+        this.height = height;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getEthnicity() {
+        return ethnicity;
+    }
+
+    public void setEthnicity(String ethnicity) {
+        this.ethnicity = ethnicity;
+    }
+
+    public String getOccupation() {
+        return occupation;
+    }
+
+    public void setOccupation(String occupation) {
+        this.occupation = occupation;
+    }
+
+    public String getContactAddress() {
+        return contactAddress;
+    }
+
+    public void setContactAddress(String contactAddress) {
+        this.contactAddress = contactAddress;
+    }
+
+    public String getDetailAddress() {
+        return detailAddress;
+    }
+
+    public void setDetailAddress(String detailAddress) {
+        this.detailAddress = detailAddress;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
+    }
+
+    public String getMedicalRecordNo() {
+        return medicalRecordNo;
+    }
+
+    public void setMedicalRecordNo(String medicalRecordNo) {
+        this.medicalRecordNo = medicalRecordNo;
+    }
+
+    public String getDiagnosis() {
+        return diagnosis;
+    }
+
+    public void setDiagnosis(String diagnosis) {
+        this.diagnosis = diagnosis;
+    }
+
+    public String getDiseaseType() {
+        return diseaseType;
+    }
+
+    public void setDiseaseType(String diseaseType) {
+        this.diseaseType = diseaseType;
+    }
+
+    public String getEnrollmentInstitution() {
+        return enrollmentInstitution;
+    }
+
+    public void setEnrollmentInstitution(String enrollmentInstitution) {
+        this.enrollmentInstitution = enrollmentInstitution;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 }

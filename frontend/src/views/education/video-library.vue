@@ -75,14 +75,20 @@
 
       <!-- 操作按钮区域 -->
       <div class="toolbar">
-        <el-button
-          type="primary"
-          @click="handleAdd"
-          icon="el-icon-plus"
-          size="small"
-        >
-          添加内容
-        </el-button>
+        <div class="toolbar-right">
+          <el-button
+            type="primary"
+            @click="handleAdd"
+            icon="el-icon-plus"
+            size="small"
+          >
+            添加内容
+          </el-button>
+          <el-button icon="el-icon-refresh" circle size="small" @click="fetchData" title="刷新" />
+          <el-button icon="el-icon-s-operation" circle size="small" title="列设置" />
+          <el-button icon="el-icon-setting" circle size="small" title="设置" />
+          <el-button icon="el-icon-full-screen" circle size="small" @click="handleFullScreen" title="全屏" />
+        </div>
       </div>
 
       <!-- 视频素材列表 -->
@@ -181,32 +187,6 @@
       </div>
     </el-card>
 
-    <!-- 详情对话框 -->
-    <el-dialog title="视频素材详情" :visible.sync="detailDialogVisible" width="70%">
-      <div v-if="currentVideo" class="video-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="视频标题" :span="2">{{ currentVideo.videoTitle }}</el-descriptions-item>
-          <el-descriptions-item label="视频ID">{{ currentVideo.videoId }}</el-descriptions-item>
-          <el-descriptions-item label="所属板块">{{ currentVideo.categorySection }}</el-descriptions-item>
-          <el-descriptions-item label="作者">{{ currentVideo.author }}</el-descriptions-item>
-          <el-descriptions-item label="内容状态">
-            <el-tag :type="getStatusType(currentVideo.contentStatus)">
-              {{ currentVideo.contentStatus }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="阅读量">{{ formatNumber(currentVideo.viewCount) }}</el-descriptions-item>
-          <el-descriptions-item label="点赞量">{{ formatNumber(currentVideo.likeCount) }}</el-descriptions-item>
-          <el-descriptions-item label="发布时间">{{ formatDateTime(currentVideo.publishTime) }}</el-descriptions-item>
-          <el-descriptions-item label="视频描述" :span="2">
-            <div class="description-content">{{ currentVideo.videoDescription || '暂无描述' }}</div>
-          </el-descriptions-item>
-        </el-descriptions>
-      </div>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-      </div>
-    </el-dialog>
-
     <!-- 预览对话框 -->
     <el-dialog title="视频预览" :visible.sync="previewDialogVisible" width="80%">
       <div v-if="currentVideo" class="video-preview">
@@ -264,7 +244,6 @@ export default {
         total: 0
       },
       // 对话框显示状态
-      detailDialogVisible: false,
       previewDialogVisible: false,
       // 当前操作的视频
       currentVideo: null
@@ -337,8 +316,8 @@ export default {
     // 详情
     handleDetail(row) {
       this.$router.push({
-        path: '/education/video-add',
-        query: { mode: 'detail', id: row.id }
+        path: '/education/video-detail',
+        query: { id: row.id }
       })
     },
     // 分页大小改变
@@ -372,6 +351,15 @@ export default {
     formatNumber(num) {
       if (!num) return '0'
       return num.toString()
+    },
+    // 全屏显示
+    handleFullScreen() {
+      const element = document.documentElement
+      if (document.fullscreenElement) {
+        document.exitFullscreen()
+      } else {
+        element.requestFullscreen()
+      }
     }
   }
 }
@@ -392,6 +380,25 @@ export default {
     margin-bottom: 20px;
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+
+      .el-button.is-circle {
+        padding: 8px;
+        border-color: #dcdfe6;
+        color: #606266;
+
+        &:hover {
+          color: #409eff;
+          border-color: #c6e2ff;
+          background-color: #ecf5ff;
+        }
+      }
+    }
   }
 
   .pagination-container {
@@ -402,16 +409,6 @@ export default {
       margin-right: 20px;
       color: #606266;
       font-size: 14px;
-    }
-  }
-
-  .video-detail {
-    padding: 20px 0;
-
-    .description-content {
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-word;
     }
   }
 

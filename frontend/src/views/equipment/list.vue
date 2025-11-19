@@ -45,7 +45,7 @@
       </div>
 
       <div class="filter-item">
-        <el-button type="primary" icon="el-icon-search" @click="handleQuery">查询</el-button>
+        <el-button class="custom-primary-btn" icon="el-icon-search" @click="handleQuery">查询</el-button>
         <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
       </div>
     </div>
@@ -53,7 +53,7 @@
     <!-- 批量操作功能 -->
     <div class="operation-container">
       <el-button
-        type="success"
+        class="custom-primary-btn"
         icon="el-icon-top"
         :disabled="multipleSelection.length === 0"
         @click="handleBatchOnline"
@@ -61,7 +61,7 @@
         批量上架
       </el-button>
       <el-button
-        type="warning"
+        class="custom-primary-btn"
         icon="el-icon-bottom"
         :disabled="multipleSelection.length === 0"
         @click="handleBatchOffline"
@@ -69,14 +69,14 @@
         批量下架
       </el-button>
       <el-button
-        type="info"
+        class="custom-primary-btn"
         icon="el-icon-upload2"
         @click="handleImport"
       >
         批量导入
       </el-button>
       <el-button
-        type="primary"
+        class="custom-primary-btn"
         icon="el-icon-plus"
         @click="handleAdd"
       >
@@ -91,16 +91,17 @@
       border
       stripe
       style="width: 100%; margin-top: 16px;"
+      :header-cell-style="{ color: 'rgb(37, 37, 37)', fontWeight: '500', backgroundColor: 'rgb(250, 250, 250)' }"
       @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column prop="serialNumber" label="序号" width="80" align="center" />
-      <el-table-column prop="region" label="区域" width="120" show-overflow-tooltip />
-      <el-table-column prop="equipmentName" label="设备名称" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="equipmentType" label="设备类型" width="180" show-overflow-tooltip />
-      <el-table-column prop="equipmentCode" label="设备编号" width="150" show-overflow-tooltip />
+      <el-table-column type="selection" width="55" align="center" header-align="center" />
+      <el-table-column prop="serialNumber" label="序号" width="100" align="center" header-align="center" />
+      <el-table-column prop="region" label="区域" width="140" align="center" header-align="center" />
+      <el-table-column prop="equipmentName" label="设备名称" width="200" align="center" header-align="center" />
+      <el-table-column prop="equipmentType" label="设备类型" width="220" align="center" header-align="center" />
+      <el-table-column prop="equipmentCode" label="设备编号" width="180" align="center" header-align="center" />
 
-      <el-table-column prop="status" label="状态" width="100" align="center">
+      <el-table-column prop="status" label="状态" width="120" align="center" header-align="center">
         <template slot-scope="scope">
           <el-tag :type="scope.row.status === '上架' ? 'success' : 'danger'">
             {{ scope.row.status }}
@@ -108,14 +109,15 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="lastOperationTime" label="上次操作时间" width="160" align="center" />
-      <el-table-column prop="createdTime" label="创建时间" width="160" align="center" />
+      <el-table-column prop="lastOperationTime" label="上次操作时间" width="180" align="center" header-align="center" />
+      <el-table-column prop="createdTime" label="创建时间" width="180" align="center" header-align="center" />
 
       <!-- 固定在右侧的操作列 -->
       <el-table-column
         label="操作"
-        width="180"
+        width="200"
         align="center"
+        header-align="center"
         fixed="right"
       >
         <template slot-scope="scope">
@@ -508,6 +510,31 @@ export default {
   }
 }
 
+// 自定义按钮样式
+.custom-primary-btn {
+  background-color: rgb(144, 126, 179);
+  border-color: rgb(144, 126, 179);
+  color: #fff;
+
+  &:hover,
+  &:focus {
+    background-color: rgb(134, 116, 169);
+    border-color: rgb(134, 116, 169);
+    color: #fff;
+  }
+
+  &:active {
+    background-color: rgb(124, 106, 159);
+    border-color: rgb(124, 106, 159);
+  }
+
+  &:disabled {
+    background-color: rgb(144, 126, 179);
+    border-color: rgb(144, 126, 179);
+    opacity: 0.5;
+  }
+}
+
 .operation-container {
   margin-bottom: 16px;
   padding: 16px;
@@ -519,9 +546,58 @@ export default {
   padding: 20px;
 }
 
-// 固定操作列样式
-::v-deep .el-table__fixed-right {
-  background: #fff;
+// 表格样式
+.el-table {
+  // 表头样式
+  ::v-deep .el-table__header th {
+    color: rgb(37, 37, 37);
+    font-weight: 500;
+    background-color: rgb(250, 250, 250);
+    padding: 16px 0;
+  }
+
+  // 表格单元格样式 - 增加内边距
+  ::v-deep .el-table__body td {
+    padding: 16px 0;
+  }
+
+  // 表头和单元格居中对齐
+  ::v-deep .el-table__header th,
+  ::v-deep .el-table__body td {
+    text-align: center;
+  }
+
+  // 操作列按钮样式
+  ::v-deep .el-button--text {
+    padding: 0 5px;
+    margin: 0 2px;
+    font-size: 14px;
+    color: rgb(106, 91, 140);
+
+    &:hover {
+      color: rgb(96, 81, 130);
+    }
+
+    // 图标颜色
+    i {
+      color: rgb(106, 91, 140);
+    }
+
+    &:hover i {
+      color: rgb(96, 81, 130);
+    }
+  }
+
+  // 固定操作列样式
+  ::v-deep .el-table__fixed-right {
+    box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+  }
+
+  // 固定列的表头也需要背景色
+  ::v-deep .el-table__fixed-right .el-table__header th {
+    background-color: rgb(250, 250, 250);
+  }
 }
 
 // 表格滚动条样式

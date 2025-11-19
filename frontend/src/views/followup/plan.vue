@@ -42,14 +42,19 @@
 
       <!-- 操作按钮区域 -->
       <div class="toolbar">
-        <el-button
-          type="primary"
-          @click="handleAdd"
-          icon="el-icon-plus"
-          size="small"
-        >
-          新增计划
-        </el-button>
+        <div class="toolbar-right">
+          <el-button
+            type="primary"
+            @click="handleAdd"
+            icon="el-icon-circle-plus-outline"
+          >
+            新增
+          </el-button>
+          <el-button icon="el-icon-refresh" circle size="small" @click="getList" title="刷新" />
+          <el-button icon="el-icon-s-operation" circle size="small" title="列设置" />
+          <el-button icon="el-icon-setting" circle size="small" title="设置" />
+          <el-button icon="el-icon-full-screen" circle size="small" title="全屏" />
+        </div>
       </div>
 
       <!-- 计划列表 -->
@@ -60,7 +65,7 @@
         element-loading-text="加载中..."
       >
         <el-table-column prop="planName" label="计划名称" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="linkedProject" label="随访项目" width="150" show-overflow-tooltip />
+        <el-table-column prop="linkedProjectName" label="随访项目" width="150" show-overflow-tooltip />
         <el-table-column prop="versionNumber" label="当前版本号" width="100" align="center" />
         <el-table-column prop="status" label="状态" width="100" align="center">
           <template slot-scope="scope">
@@ -72,9 +77,9 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="lastModifiedTime" label="最近一次修改时间" width="180" align="center">
+        <el-table-column prop="updatedTime" label="最近一次修改时间" width="180" align="center">
           <template slot-scope="scope">
-            {{ formatDateTime(scope.row.lastModifiedTime) }}
+            {{ formatDateTime(scope.row.updatedTime) }}
           </template>
         </el-table-column>
         <el-table-column prop="createdTime" label="创建时间" width="180" align="center">
@@ -293,7 +298,7 @@ export default {
     },
     // 新增计划
     handleAdd() {
-      this.$message.info('新增计划功能开发中')
+      this.$router.push('/followup/plan/add')
     },
     // 查看详情
     handleViewDetail(row) {
@@ -376,6 +381,29 @@ export default {
     margin-bottom: 20px;
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .el-button.el-button--primary {
+        color: #fff;
+        border-color: #409eff;
+        background-color: #409eff;
+      }
+
+      .el-button.is-circle {
+        color: #606266;
+        border-color: #dcdfe6;
+
+        &:hover {
+          color: #409eff;
+          border-color: #409eff;
+        }
+      }
+    }
   }
 
   .pagination-container {

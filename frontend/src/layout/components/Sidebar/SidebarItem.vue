@@ -1,14 +1,26 @@
 <template>
-  <div v-if="!item.hidden">
+  <div v-if="!item.hidden" class="sidebar-item-container">
     <template v-if="hasOneShowingChild(item.children,item) && (!onlyOneChild.children||onlyOneChild.noShowingChildren)&&!item.alwaysShow">
       <app-link v-if="onlyOneChild.meta" :to="resolvePath(onlyOneChild.path)">
-        <el-menu-item :index="resolvePath(onlyOneChild.path)" :class="{'submenu-title-noDropdown':!isNest}">
+        <el-menu-item
+          :index="resolvePath(onlyOneChild.path)"
+          :class="{'submenu-title-noDropdown':!isNest}"
+          @mouseenter.native="showTooltip(onlyOneChild.meta.title)"
+          @mouseleave.native="hideTooltip"
+        >
           <item :icon="onlyOneChild.meta.icon||(item.meta&&item.meta.icon)" :title="onlyOneChild.meta.title" />
         </el-menu-item>
       </app-link>
     </template>
 
-    <el-submenu v-else ref="subMenu" :index="resolvePath(item.path)" popper-append-to-body>
+    <el-submenu
+      v-else
+      ref="subMenu"
+      :index="resolvePath(item.path)"
+      popper-append-to-body
+      @mouseenter.native="showTooltip(item.meta.title)"
+      @mouseleave.native="hideTooltip"
+    >
       <template slot="title">
         <item v-if="item.meta" :icon="item.meta && item.meta.icon" :title="item.meta.title" />
       </template>
@@ -21,6 +33,9 @@
         class="nest-menu"
       />
     </el-submenu>
+
+    <!-- 悬停提示 -->
+    <div v-if="tooltipVisible" class="hover-tooltip">{{ tooltipText }}</div>
   </div>
 </template>
 
@@ -49,7 +64,10 @@ export default {
   },
   data() {
     this.onlyOneChild = null
-    return {}
+    return {
+      tooltipVisible: false,
+      tooltipText: ''
+    }
   },
   methods: {
     hasOneShowingChild(children = [], parent) {
@@ -81,7 +99,37 @@ export default {
         return this.basePath
       }
       return path.resolve(this.basePath, routePath)
+    },
+    showTooltip(title) {
+      this.tooltipText = title
+      this.tooltipVisible = true
+    },
+    hideTooltip() {
+      this.tooltipVisible = false
     }
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.sidebar-item-container {
+  position: relative;
+}
+
+// 悬停提示样式
+.hover-tooltip {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 21, 41, 0.95);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'SimHei', '黑体', 'Microsoft YaHei', sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+</style>

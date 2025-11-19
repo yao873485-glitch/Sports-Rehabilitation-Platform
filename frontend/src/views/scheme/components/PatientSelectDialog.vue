@@ -2,104 +2,94 @@
   <el-dialog
     title="选择患者"
     :visible.sync="dialogVisible"
-    width="900px"
+    width="1200px"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     @close="handleClose"
   >
     <!-- 搜索区域 -->
     <div class="search-container">
+      <div class="search-label">搜索：</div>
       <el-input
         v-model="searchKeyword"
         placeholder="请输入患者姓名/电话/档案号"
         clearable
-        style="width: 400px; margin-right: 10px;"
+        style="width: 300px;"
+        @keyup.enter="handleSearch"
+        @clear="handleReset"
       />
-      <el-button type="primary" icon="el-icon-search" @click="handleSearch">查询</el-button>
+      <el-button class="custom-primary-btn" icon="el-icon-search" @click="handleSearch">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <el-button
-        type="primary"
-        style="float: right; background-color: #9b59d6; border-color: #9b59d6;"
+        class="custom-primary-btn quick-create-btn"
         @click="handleQuickCreate"
       >
         快速建档
       </el-button>
     </div>
 
-    <!-- 患者列表 -->
-    <div class="patient-list-container">
-      <el-radio-group v-model="selectedPatientId" style="width: 100%;">
-        <div v-if="patientList.length === 0" class="empty-data">
-          <el-empty description="暂无患者数据"></el-empty>
-        </div>
-        <div
-          v-for="patient in patientList"
-          :key="patient.id"
-          class="patient-item"
-        >
-          <el-radio :label="patient.id" class="patient-radio" @click.native.prevent="handleRadioClick(patient.id)">
-            <div class="patient-card">
-              <div class="patient-info-row">
-                <!-- 患者姓名 + 性别 + 年龄 -->
-                <div class="info-group">
-                  <span class="label">患者信息：</span>
-                  <span class="patient-name">{{ patient.name }}</span>
-                  <span :class="patient.gender === '男' ? 'gender-icon male' : 'gender-icon female'">
-                    ●
-                  </span>
-                  <span class="patient-age">{{ calculateAge(patient.birthDate) }}岁</span>
-                </div>
-
-                <!-- 出生日期 -->
-                <div class="info-group">
-                  <span class="label">出生日期：</span>
-                  <span class="value">{{ patient.birthDate }}</span>
-                </div>
-
-                <!-- 档案号 -->
-                <div class="info-group">
-                  <span class="label">档案号：</span>
-                  <span class="value">{{ patient.medicalRecordNo }}</span>
-                </div>
-
-                <!-- 病种 -->
-                <div class="info-group">
-                  <span class="label">病种：</span>
-                  <span class="value">{{ patient.diseaseType }}</span>
-                </div>
-
-                <!-- 入组机构 -->
-                <div class="info-group">
-                  <span class="label">入组机构：</span>
-                  <span class="value">{{ patient.enrollmentInstitution }}</span>
-                </div>
-              </div>
+    <!-- 患者表格 -->
+    <div class="patient-table-container">
+      <el-table
+        ref="patientTable"
+        :data="patientList"
+        highlight-current-row
+        style="width: 100%"
+        :header-cell-style="{ color: 'rgb(37, 37, 37)', fontWeight: '500', backgroundColor: 'rgb(250, 250, 250)' }"
+        :row-class-name="getRowClassName"
+        @row-click="handleRowClick"
+      >
+        <el-table-column width="55" align="center" header-align="center">
+          <template slot-scope="scope">
+            <div class="radio-wrapper" @click.stop="handleRadioClick(scope.row.id)">
+              <span
+                class="custom-radio"
+                :class="{ 'is-checked': selectedPatientId === scope.row.id }"
+              >
+                <span class="custom-radio-inner"></span>
+              </span>
             </div>
-          </el-radio>
-        </div>
-      </el-radio-group>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="患者信息" width="180" align="center" header-align="center">
+          <template slot-scope="scope">
+            <span class="patient-name">{{ scope.row.name }}</span>
+            <span :class="scope.row.gender === '男' ? 'male-icon' : 'female-icon'">
+              {{ scope.row.gender === '男' ? '♂' : '♀' }}
+            </span>
+            <span class="patient-age">{{ calculateAge(scope.row.birthDate) }}岁</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="birthDate" label="出生日期" width="150" align="center" header-align="center" />
+
+        <el-table-column prop="medicalRecordNo" label="档案号" width="220" align="center" header-align="center" />
+
+        <el-table-column prop="diseaseType" label="病种" width="180" align="center" header-align="center" />
+
+        <el-table-column prop="enrollmentInstitution" label="入组机构" min-width="200" align="center" header-align="center" />
+      </el-table>
     </div>
 
     <!-- 分页 -->
     <div class="pagination-container">
-      <div class="pagination-info">
-        当前显示 {{ ((queryParams.pageNum - 1) * queryParams.pageSize + 1) }}-{{ Math.min(queryParams.pageNum * queryParams.pageSize, total) }} 条，总共 {{ total }} 条数据
-      </div>
       <el-pagination
         :current-page="queryParams.pageNum"
         :page-size="queryParams.pageSize"
         :total="total"
-        :page-sizes="[5]"
-        layout="prev, pager, next, sizes"
+        layout="prev, pager, next"
         @current-change="handlePageChange"
-        @size-change="handleSizeChange"
       />
+      <div class="pagination-info">
+        {{ queryParams.pageSize }}条/页
+      </div>
     </div>
 
     <!-- 底部按钮 -->
     <span slot="footer" class="dialog-footer">
-      <el-button @click="handleClose">取 消</el-button>
-      <el-button type="primary" @click="handleConfirm">确 认</el-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button class="custom-primary-btn" @click="handleConfirm">确认</el-button>
     </span>
   </el-dialog>
 </template>
@@ -117,7 +107,6 @@ export default {
   },
   data() {
     return {
-      dialogVisible: false,
       searchKeyword: '',
       selectedPatientId: null,
       patientList: [],
@@ -125,13 +114,22 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 5,
-        searchKeyword: ''
+        name: '' // 后端使用name参数
+      }
+    }
+  },
+  computed: {
+    dialogVisible: {
+      get() {
+        return this.visible
+      },
+      set(val) {
+        this.$emit('update:visible', val)
       }
     }
   },
   watch: {
     visible(val) {
-      this.dialogVisible = val
       if (val) {
         this.resetData()
         this.getPatientList()
@@ -139,6 +137,16 @@ export default {
     }
   },
   methods: {
+    /** 获取表格行样式类名 */
+    getRowClassName({ row }) {
+      return this.selectedPatientId === row.id ? 'selected-row' : ''
+    },
+
+    /** 处理表格行点击 */
+    handleRowClick(row) {
+      this.handleRadioClick(row.id)
+    },
+
     /** 处理单选按钮点击 - 支持取消选中 */
     handleRadioClick(patientId) {
       if (this.selectedPatientId === patientId) {
@@ -168,7 +176,7 @@ export default {
       const params = {
         pageNum: this.queryParams.pageNum,
         pageSize: this.queryParams.pageSize,
-        searchKeyword: this.queryParams.searchKeyword
+        name: this.queryParams.name // 后端使用name参数进行搜索
       }
 
       getPatientList(params).then(response => {
@@ -184,16 +192,18 @@ export default {
 
     /** 搜索 */
     handleSearch() {
-      this.queryParams.searchKeyword = this.searchKeyword
+      this.queryParams.name = this.searchKeyword
       this.queryParams.pageNum = 1
+      this.selectedPatientId = null // 清除选中状态
       this.getPatientList()
     },
 
     /** 重置 */
     handleReset() {
       this.searchKeyword = ''
-      this.queryParams.searchKeyword = ''
+      this.queryParams.name = ''
       this.queryParams.pageNum = 1
+      this.selectedPatientId = null // 清除选中状态
       this.getPatientList()
     },
 
@@ -249,7 +259,7 @@ export default {
       this.queryParams = {
         pageNum: 1,
         pageSize: 5,
-        searchKeyword: ''
+        name: ''
       }
     }
   }
@@ -258,119 +268,48 @@ export default {
 
 <style lang="scss" scoped>
 .search-container {
+  display: flex;
+  align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid #ebeef5;
+  gap: 10px;
+
+  .search-label {
+    font-weight: 500;
+    color: #606266;
+    white-space: nowrap;
+  }
+
+  .quick-create-btn {
+    margin-left: auto;
+  }
 }
 
-.patient-list-container {
-  min-height: 300px;
-  max-height: 400px;
-  overflow-y: auto;
+.patient-table-container {
   margin-bottom: 20px;
+}
 
-  .empty-data {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 300px;
-  }
+.patient-name {
+  font-weight: 600;
+  margin-right: 5px;
+}
 
-  .patient-item {
-    margin-bottom: 10px;
-    transition: all 0.3s;
+.male-icon {
+  color: #409eff;
+  font-weight: bold;
+  margin-right: 5px;
+}
 
-    &:hover {
-      .patient-card {
-        border-color: #409eff;
-        box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
-      }
-    }
+.female-icon {
+  color: #f56c6c;
+  font-weight: bold;
+  margin-right: 5px;
+}
 
-    .patient-radio {
-      width: 100%;
-      margin-right: 0;
-      display: flex;
-      align-items: center;
-
-      ::v-deep .el-radio__input {
-        align-self: center;
-      }
-
-      ::v-deep .el-radio__label {
-        width: 100%;
-        padding-left: 10px;
-      }
-    }
-
-    .patient-card {
-      border: 1px solid #dcdfe6;
-      border-radius: 4px;
-      padding: 15px;
-      background-color: #fff;
-      transition: all 0.3s;
-      cursor: pointer;
-
-      .patient-info-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: nowrap;
-        gap: 20px;
-
-        .info-group {
-          display: flex;
-          align-items: center;
-          flex-shrink: 0;
-
-          .label {
-            color: #606266;
-            font-size: 14px;
-            margin-right: 5px;
-            white-space: nowrap;
-          }
-
-          .value {
-            color: #303133;
-            font-size: 14px;
-            font-weight: 500;
-            white-space: nowrap;
-          }
-
-          .patient-name {
-            color: #303133;
-            font-size: 14px;
-            font-weight: 600;
-            margin-right: 5px;
-          }
-
-          .gender-icon {
-            font-size: 16px;
-            margin-right: 5px;
-
-            &.male {
-              color: #409eff;
-            }
-
-            &.female {
-              color: #f56c6c;
-            }
-          }
-
-          .patient-age {
-            color: #909399;
-            font-size: 13px;
-          }
-        }
-      }
-    }
-  }
-
-  // 选中状态样式
-  ::v-deep .el-radio__input.is-checked + .el-radio__label .patient-card {
-    border-color: #409eff;
-    background-color: #ecf5ff;
-  }
+.patient-age {
+  color: #909399;
+  font-size: 13px;
 }
 
 .pagination-container {
@@ -392,21 +331,136 @@ export default {
   gap: 10px;
 }
 
-// 滚动条样式
-.patient-list-container::-webkit-scrollbar {
-  width: 6px;
-}
+// 自定义按钮样式
+.custom-primary-btn {
+  background-color: rgb(144, 126, 179);
+  border-color: rgb(144, 126, 179);
+  color: #fff;
 
-.patient-list-container::-webkit-scrollbar-thumb {
-  background-color: #dcdfe6;
-  border-radius: 3px;
+  &:hover,
+  &:focus {
+    background-color: rgb(134, 116, 169);
+    border-color: rgb(134, 116, 169);
+    color: #fff;
+  }
 
-  &:hover {
-    background-color: #c0c4cc;
+  &:active {
+    background-color: rgb(124, 106, 159);
+    border-color: rgb(124, 106, 159);
   }
 }
 
-.patient-list-container::-webkit-scrollbar-track {
-  background-color: #f5f7fa;
+// 表格样式
+.el-table {
+  ::v-deep .el-table__header th {
+    color: rgb(37, 37, 37);
+    font-weight: 500;
+    background-color: rgb(250, 250, 250);
+    padding: 16px 0;
+  }
+
+  ::v-deep .el-table__body td {
+    padding: 16px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  ::v-deep .el-table__header th,
+  ::v-deep .el-table__body td {
+    text-align: center;
+  }
+
+  // 确保表头字体颜色
+  ::v-deep .el-table__header-wrapper th {
+    color: rgb(37, 37, 37) !important;
+  }
+
+  // 表格行可点击样式
+  ::v-deep .el-table__body tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #f5f7fa;
+    }
+  }
+
+  // 选中行样式
+  ::v-deep .el-table__body tr.selected-row {
+    background-color: rgb(230, 221, 239) !important;
+
+    td {
+      background-color: rgb(230, 221, 239) !important;
+    }
+  }
+}
+
+// 自定义单选框样式
+.radio-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.custom-radio {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #dcdfe6;
+  border-radius: 50%;
+  position: relative;
+  background-color: #fff;
+  transition: all 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    border-color: rgb(144, 126, 179);
+  }
+
+  // 选中状态
+  &.is-checked {
+    border-color: rgb(144, 126, 179);
+    background-color: rgb(144, 126, 179);
+
+    .custom-radio-inner {
+      display: block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #fff;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  .custom-radio-inner {
+    display: none;
+  }
+}
+
+// 分页样式
+::v-deep .el-pagination {
+  .el-pager li {
+    &.active {
+      color: rgb(144, 126, 179);
+      cursor: default;
+    }
+
+    &:hover {
+      color: rgb(144, 126, 179);
+    }
+  }
+
+  .btn-prev,
+  .btn-next {
+    &:hover {
+      color: rgb(144, 126, 179);
+    }
+  }
 }
 </style>

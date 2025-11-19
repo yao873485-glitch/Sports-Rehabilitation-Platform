@@ -19,8 +19,8 @@ public class EduVideoQueryDTO extends PageQuery {
     @Schema(description = "作者")
     private String author;
 
-    @Schema(description = "所属板块")
-    private String categorySection;
+    @Schema(description = "所属模块")
+    private String moduleCategory;
 
     @Schema(description = "内容状态")
     private String contentStatus;

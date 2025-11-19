@@ -2,38 +2,26 @@
   <div class="app-container">
     <!-- 患者信息卡片 - 固定顶部 -->
     <el-card class="patient-info-card">
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="label">姓名：</span>
-          <span class="value">
-            {{ patientInfo.name }}
-            <el-tag :type="patientInfo.gender === '男' ? 'primary' : 'danger'" size="mini" style="margin-left: 8px;">
-              {{ patientInfo.gender }}
-            </el-tag>
-            <span style="margin-left: 8px; color: #909399;">{{ calculateAge(patientInfo.birthDate) }}岁</span>
-          </span>
-        </div>
-        <div class="info-item">
-          <span class="label">身份证：</span>
-          <span class="value">{{ patientInfo.idCard }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">档案号：</span>
-          <span class="value">{{ patientInfo.medicalRecordNo }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">出生日期：</span>
-          <span class="value">{{ patientInfo.birthDate }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">诊断：</span>
-          <span class="value">{{ patientInfo.diagnosis || '-' }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">病种：</span>
-          <span class="value">{{ patientInfo.diseaseType }}</span>
-        </div>
-      </div>
+      <el-table
+        :data="[patientInfo]"
+        :show-header="true"
+        style="width: 100%"
+      >
+        <el-table-column prop="name" label="姓名" align="center">
+          <template slot-scope="scope">
+            {{ scope.row.name }} · {{ scope.row.gender }} · {{ calculateAge(scope.row.birthDate) }}岁
+          </template>
+        </el-table-column>
+        <el-table-column prop="idCard" label="身份证" align="center" />
+        <el-table-column prop="medicalRecordNo" label="档案号" align="center" />
+        <el-table-column prop="birthDate" label="出生日期" align="center" />
+        <el-table-column prop="diagnosis" label="诊断" align="center">
+          <template slot-scope="scope">
+            {{ scope.row.diagnosis || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="diseaseType" label="病种" align="center" />
+      </el-table>
     </el-card>
 
     <!-- 主内容区 -->
@@ -45,73 +33,68 @@
             ref="basicForm"
             :model="basicForm"
             :rules="basicRules"
-            label-width="120px"
-            style="max-width: 700px; margin: 20px auto;"
+            label-width="100px"
+            style="max-width: 500px; padding: 20px 0 20px 40px;"
           >
             <!-- 方案周期 -->
-            <el-form-item label="方案周期" prop="schemeCycle">
+            <el-form-item label="方案周期:" prop="schemeCycle" required>
               <el-select
                 v-model="basicForm.schemeCycle"
                 placeholder="请选择方案周期"
-                style="width: 200px;"
+                style="width: 150px;"
                 @change="handleCycleChange"
               >
                 <el-option
                   v-for="month in 12"
                   :key="month"
-                  :label="`${month}月`"
+                  :label="`${month}`"
                   :value="month"
                 />
               </el-select>
-              <span style="margin-left: 10px; color: #909399;">单位：月</span>
+              <span style="margin-left: 10px; color: #606266;">月</span>
             </el-form-item>
 
-            <!-- 档案信息区域 -->
-            <el-divider content-position="left">档案信息</el-divider>
-            <div class="archive-info-container">
-              <div class="archive-info-item">
-                <span class="archive-label">健康档案</span>
-                <el-button
-                  type="primary"
-                  size="small"
-                  style="background-color: #9b59d6; border-color: #9b59d6;"
-                  @click="handleViewHealthRecord"
-                >
-                  查看
-                </el-button>
-              </div>
-              <div class="archive-info-item">
-                <span class="archive-label">专病档案</span>
-                <el-button
-                  type="primary"
-                  size="small"
-                  style="background-color: #9b59d6; border-color: #9b59d6;"
-                  @click="handleViewDiseaseRecord"
-                >
-                  查看
-                </el-button>
-              </div>
-              <div class="archive-info-item">
-                <span class="archive-label">入组评估</span>
-                <el-button
-                  type="primary"
-                  size="small"
-                  style="background-color: #9b59d6; border-color: #9b59d6;"
-                  @click="handleViewEnrollmentAssessment"
-                >
-                  查看
-                </el-button>
-              </div>
-            </div>
+            <!-- 健康档案 -->
+            <el-form-item label="健康档案:">
+              <el-button
+                size="small"
+                class="archive-btn"
+                @click="handleViewHealthRecord"
+              >
+                查看
+              </el-button>
+            </el-form-item>
+
+            <!-- 专病档案 -->
+            <el-form-item label="专病档案:">
+              <el-button
+                size="small"
+                class="archive-btn"
+                @click="handleViewDiseaseRecord"
+              >
+                查看
+              </el-button>
+            </el-form-item>
+
+            <!-- 入组评估 -->
+            <el-form-item label="入组评估:">
+              <el-button
+                size="small"
+                class="archive-btn"
+                @click="handleViewEnrollmentAssessment"
+              >
+                查看
+              </el-button>
+            </el-form-item>
 
             <!-- 保存按钮 -->
             <el-form-item>
-              <div style="text-align: right; margin-top: 40px;">
+              <div style="text-align: right; margin-top: 80px; padding-right: 40px;">
                 <el-button
                   type="primary"
                   :disabled="!isCycleModified"
                   :loading="submitLoading"
-                  style="background-color: #6b3fa0; border-color: #6b3fa0;"
+                  class="save-btn"
                   @click="handleSave"
                 >
                   保存
@@ -127,58 +110,68 @@
             <!-- 操作按钮区域（右上角） -->
             <div class="prescription-header">
               <div class="header-actions">
-                <el-button type="primary" icon="el-icon-plus" size="small" @click="handleAddExercise">
+                <el-button class="prescription-action-btn" icon="el-icon-plus" size="small" @click="handleAddExercise">
                   新增一行
                 </el-button>
                 <el-button
-                  type="success"
+                  class="prescription-action-btn save-action-btn"
                   :loading="prescriptionSaving"
                   size="small"
                   @click="handleSavePrescription"
                 >
                   保存
                 </el-button>
-                <el-button type="primary" size="small" @click="handleSubmitPrescription">
+                <el-button class="prescription-action-btn" size="small" @click="handleSubmitPrescription">
                   提交
                 </el-button>
               </div>
             </div>
 
-            <!-- 运动项目列表（横向滚动） -->
-            <div class="exercise-table-wrapper">
-              <div
-                v-for="(item, index) in exerciseList"
-                :key="index"
-                class="exercise-row"
-              >
-                <div class="exercise-field-row">
-                  <div class="exercise-field">
-                    <span class="field-label">序号：</span>
-                    <span class="field-value">{{ index + 1 }}</span>
-                  </div>
+            <!-- 运动项目表格 -->
+            <el-table
+              ref="prescriptionTable"
+              :data="exerciseList"
+              border
+              class="prescription-table"
+              :header-cell-style="{
+                backgroundColor: 'rgb(250, 250, 250)',
+                color: 'rgb(38, 38, 38)',
+                textAlign: 'center'
+              }"
+            >
+              <!-- 复选框列 -->
+              <el-table-column type="selection" width="55" align="center" />
 
-                  <div class="exercise-field">
-                    <span class="field-label">运动场景：</span>
-                    <el-select v-model="item.exerciseScene" placeholder="请选择" size="small" style="width: 120px;">
+                <!-- 序号列 -->
+                <el-table-column label="序号" type="index" width="60" align="center" :index="index => index + 1" />
+
+                <!-- 运动场景 -->
+                <el-table-column label="运动场景" align="center" width="120">
+                  <template slot-scope="scope">
+                    <el-select v-model="scope.row.exerciseScene" placeholder="请选择" size="small">
                       <el-option label="机构" value="机构" />
                       <el-option label="居家" value="居家" />
                     </el-select>
-                  </div>
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">运动类型：</span>
-                    <el-select v-model="item.exerciseType" placeholder="请选择" size="small" style="width: 140px;">
+                <!-- 运动类型 -->
+                <el-table-column label="运动类型" align="center" width="140">
+                  <template slot-scope="scope">
+                    <el-select v-model="scope.row.exerciseType" placeholder="请选择" size="small">
                       <el-option label="有氧运动" value="有氧运动" />
                       <el-option label="呼吸训练" value="呼吸训练" />
                       <el-option label="平衡训练" value="平衡训练" />
                       <el-option label="抗阻训练" value="抗阻训练" />
                       <el-option label="柔韧性训练" value="柔韧性训练" />
                     </el-select>
-                  </div>
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">运动方式：</span>
-                    <el-select v-model="item.exerciseMethod" placeholder="请选择" size="small" style="width: 180px;">
+                <!-- 运动方式 -->
+                <el-table-column label="运动方式" align="center" width="200">
+                  <template slot-scope="scope">
+                    <el-select v-model="scope.row.exerciseMethod" placeholder="请选择" size="small">
                       <el-option label="单腿站立（扶椅背）" value="单腿站立（扶椅背）" />
                       <el-option label="直线行走" value="直线行走" />
                       <el-option label="脚跟-脚尖行走" value="脚跟-脚尖行走" />
@@ -186,27 +179,33 @@
                       <el-option label="坐姿划船" value="坐姿划船" />
                       <el-option label="器械训练（腿举机轻量）" value="器械训练（腿举机轻量）" />
                     </el-select>
-                  </div>
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">注意事项：</span>
-                    <el-input v-model="item.precautions" placeholder="请输入" size="small" style="width: 180px;" />
-                  </div>
+                <!-- 注意事项 -->
+                <el-table-column label="注意事项" align="center" width="180">
+                  <template slot-scope="scope">
+                    <el-input v-model="scope.row.precautions" placeholder="请输入" size="small" />
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">单次运动时间（分）：</span>
+                <!-- 单次运动时间 -->
+                <el-table-column label="单次运动时间（分）" align="center" width="160">
+                  <template slot-scope="scope">
                     <el-input-number
-                      v-model="item.durationMinutes"
+                      v-model="scope.row.durationMinutes"
                       :min="1"
                       :max="180"
                       size="small"
-                      style="width: 120px;"
+                      controls-position="right"
                     />
-                  </div>
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">运动频率：</span>
-                    <el-select v-model="item.exerciseFrequency" placeholder="请选择" size="small" style="width: 110px;">
+                <!-- 运动频率 -->
+                <el-table-column label="运动频率" align="center" width="120">
+                  <template slot-scope="scope">
+                    <el-select v-model="scope.row.exerciseFrequency" placeholder="请选择" size="small">
                       <el-option label="1次/周" value="1次/周" />
                       <el-option label="2次/周" value="2次/周" />
                       <el-option label="3次/周" value="3次/周" />
@@ -215,77 +214,87 @@
                       <el-option label="6次/周" value="6次/周" />
                       <el-option label="7次/周" value="7次/周" />
                     </el-select>
-                  </div>
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">运动强度：</span>
-                    <el-select v-model="item.exerciseIntensity" placeholder="请选择" size="small" style="width: 110px;">
+                <!-- 运动强度 -->
+                <el-table-column label="运动强度" align="center" width="120">
+                  <template slot-scope="scope">
+                    <el-select v-model="scope.row.exerciseIntensity" placeholder="请选择" size="small">
                       <el-option label="低强度" value="低强度" />
                       <el-option label="中等" value="中等" />
                       <el-option label="高强度" value="高强度" />
                     </el-select>
-                  </div>
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">运动周期（周）：</span>
+                <!-- 运动周期（周） -->
+                <el-table-column label="运动周期（周）" align="center" width="130">
+                  <template slot-scope="scope">
                     <el-input-number
-                      v-model="item.cycleWeeks"
+                      v-model="scope.row.cycleWeeks"
                       :min="1"
                       :max="52"
                       size="small"
-                      style="width: 110px;"
+                      controls-position="right"
                     />
-                  </div>
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">总次数（次）：</span>
+                <!-- 总次数（次） -->
+                <el-table-column label="总次数（次）" align="center" width="130">
+                  <template slot-scope="scope">
                     <el-input-number
-                      v-model="item.totalSessions"
+                      v-model="scope.row.totalSessions"
                       :min="1"
                       :max="1000"
                       size="small"
-                      style="width: 110px;"
+                      controls-position="right"
                     />
-                  </div>
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">周运动总量（分）：</span>
+                <!-- 周运动总量（分） -->
+                <el-table-column label="周运动总量（分）" align="center" width="150">
+                  <template slot-scope="scope">
                     <el-input-number
-                      v-model="item.weeklyTotalMinutes"
+                      v-model="scope.row.weeklyTotalMinutes"
                       :min="0"
                       :max="10000"
                       size="small"
-                      style="width: 120px;"
+                      controls-position="right"
                     />
-                  </div>
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">运动进阶：</span>
-                    <el-input v-model="item.progression" placeholder="请输入" size="small" style="width: 180px;" />
-                  </div>
+                <!-- 运动进阶 -->
+                <el-table-column label="运动进阶" align="center" width="180">
+                  <template slot-scope="scope">
+                    <el-input v-model="scope.row.progression" placeholder="请输入" size="small" />
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">备注：</span>
-                    <el-input v-model="item.remarks" placeholder="请输入" size="small" style="width: 180px;" />
-                  </div>
+                <!-- 备注 -->
+                <el-table-column label="备注" align="center" width="180">
+                  <template slot-scope="scope">
+                    <el-input v-model="scope.row.remarks" placeholder="请输入" size="small" />
+                  </template>
+                </el-table-column>
 
-                  <div class="exercise-field">
-                    <span class="field-label">运动图示：</span>
-                    <el-input v-model="item.exerciseImage" placeholder="图片URL" size="small" style="width: 180px;" />
-                  </div>
-
-                  <div class="exercise-field">
+                <!-- 操作 -->
+                <el-table-column label="操作" align="center" width="100" fixed="right">
+                  <template slot-scope="scope">
                     <el-button
-                      type="danger"
-                      icon="el-icon-delete"
+                      type="text"
                       size="small"
-                      circle
-                      @click="handleDeleteSingleExercise(index)"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+                      class="delete-btn"
+                      @click="handleDeleteSingleExercise(scope.$index)"
+                    >
+                      删除
+                    </el-button>
+                  </template>
+                </el-table-column>
+            </el-table>
           </div>
         </el-tab-pane>
 
@@ -295,22 +304,20 @@
             <!-- 操作按钮区域（右上角） -->
             <div class="assessment-header">
               <div class="header-actions">
-                <el-button type="primary" icon="el-icon-plus" size="small" @click="handleAddAssessment">
+                <el-button class="assessment-action-btn" icon="el-icon-plus" size="small" @click="handleAddAssessment">
                   新增一行
                 </el-button>
                 <el-button
-                  type="success"
+                  class="assessment-action-btn"
                   :loading="assessmentSaving"
                   size="small"
-                  style="background-color: #9b59d6; border-color: #9b59d6;"
                   @click="handleSaveAssessment"
                 >
                   保存
                 </el-button>
                 <el-button
-                  type="primary"
+                  class="assessment-action-btn"
                   size="small"
-                  style="background-color: #9b59d6; border-color: #9b59d6;"
                   @click="handleSubmitAssessment"
                 >
                   提交
@@ -318,109 +325,148 @@
               </div>
             </div>
 
-            <!-- 评定计划列表（横向滚动） -->
-            <div class="assessment-table-wrapper">
-              <div
-                v-for="(item, index) in assessmentList"
-                :key="index"
-                class="assessment-row"
-              >
-                <div class="assessment-field-row">
-                  <div class="assessment-field">
-                    <span class="field-label">序号：</span>
-                    <span class="field-value">{{ index + 1 }}</span>
-                  </div>
+            <!-- 评定计划表格 -->
+            <el-table
+              ref="assessmentTable"
+              :data="assessmentList"
+              border
+              class="assessment-table"
+              :header-cell-style="{
+                backgroundColor: 'rgb(250, 250, 250)',
+                color: 'rgb(38, 38, 38)',
+                textAlign: 'center'
+              }"
+            >
+              <!-- 复选框列 -->
+              <el-table-column type="selection" width="55" align="center" />
 
-                  <div class="assessment-field">
-                    <span class="field-label">执行场景：</span>
-                    <el-select v-model="item.executionType" placeholder="请选择" size="small" style="width: 120px;">
-                      <el-option label="机构" value="机构" />
-                      <el-option label="居家" value="居家" />
-                    </el-select>
-                  </div>
+              <!-- 序号列 -->
+              <el-table-column label="序号" type="index" width="80" align="center" :index="index => index + 1" />
 
-                  <div class="assessment-field">
-                    <span class="field-label">量表名称：</span>
-                    <el-select v-model="item.scaleName" placeholder="请选择" size="small" style="width: 300px;">
-                      <el-option label="6分钟步行试验" value="6分钟步行试验" />
-                      <el-option label="疼痛评估（VAS）" value="疼痛评估（VAS）" />
-                      <el-option label="运动风险产妇妊娠风险评估表" value="运动风险产妇妊娠风险评估表" />
-                      <el-option label="Framingham心血管风险评分（女性版）" value="Framingham心血管风险评分（女性版）" />
-                      <el-option label="呼吸量表-BODE指数" value="呼吸量表-BODE指数" />
-                      <el-option label="圣乔治呼吸问卷（SGRQ）" value="圣乔治呼吸问卷（SGRQ）" />
-                      <el-option label="宗氏抑郁量表" value="宗氏抑郁量表" />
-                      <el-option label="抑郁自评量表（SDS）" value="抑郁自评量表（SDS）" />
-                      <el-option label="多囊卵巢综合征运动干预前专病评估" value="多囊卵巢综合征运动干预前专病评估" />
-                      <el-option label="骨质疏松症患者评估问卷 - 身体功能量表" value="骨质疏松症患者评估问卷 - 身体功能量表" />
-                      <el-option label="PHQ-9量表" value="PHQ-9量表" />
-                      <el-option label="食物频率法问卷调查(FFQ)" value="食物频率法问卷调查(FFQ)" />
-                      <el-option label="RPE量表-改良博格量表 (Borg CR10 Scale)" value="RPE量表-改良博格量表 (Borg CR10 Scale)" />
-                      <el-option label="妊娠期糖尿病风险评估表" value="妊娠期糖尿病风险评估表" />
-                      <el-option label="肌少症改良版SARC-F量表 (SARC-CalF)" value="肌少症改良版SARC-F量表 (SARC-CalF)" />
-                      <el-option label="自主感觉劳累分级表" value="自主感觉劳累分级表" />
-                      <el-option label="血糖监测记录表" value="血糖监测记录表" />
-                      <el-option label="坐站试验评估量表" value="坐站试验评估量表" />
-                      <el-option label="6分钟步行试验登记表" value="6分钟步行试验登记表" />
-                      <el-option label="呼吸量表-改良英国医学研究学会呼吸困难量表" value="呼吸量表-改良英国医学研究学会呼吸困难量表" />
-                      <el-option label="爱丁堡产后抑郁量表(EPDS)" value="爱丁堡产后抑郁量表(EPDS)" />
-                      <el-option label="功能性动作筛查诊断记录表" value="功能性动作筛查诊断记录表" />
-                      <el-option label="妊娠期高血压风险评估量表" value="妊娠期高血压风险评估量表" />
-                      <el-option label="EuroQol健康指数量表EQ-5D" value="EuroQol健康指数量表EQ-5D" />
-                      <el-option label="PCOS相关生活质量问卷（PCOSQ-5）" value="PCOS相关生活质量问卷（PCOSQ-5）" />
-                    </el-select>
-                  </div>
+              <!-- 执行场景 -->
+              <el-table-column label="执行场景" align="center" min-width="180">
+                <template slot-scope="scope">
+                  <el-select v-model="scope.row.executionType" placeholder="请选择" size="small">
+                    <el-option label="机构" value="机构" />
+                    <el-option label="居家" value="居家" />
+                  </el-select>
+                </template>
+              </el-table-column>
 
-                  <div class="assessment-field">
-                    <span class="field-label">执行频率：</span>
-                    <el-select v-model="item.executionFrequency" placeholder="请选择" size="small" style="width: 110px;">
-                      <el-option label="1次/周" value="1次/周" />
-                      <el-option label="2次/周" value="2次/周" />
-                      <el-option label="3次/周" value="3次/周" />
-                      <el-option label="4次/周" value="4次/周" />
-                      <el-option label="5次/周" value="5次/周" />
-                      <el-option label="6次/周" value="6次/周" />
-                      <el-option label="7次/周" value="7次/周" />
-                    </el-select>
-                  </div>
+              <!-- 量表名称 -->
+              <el-table-column label="量表名称" align="center" min-width="280">
+                <template slot-scope="scope">
+                  <el-select v-model="scope.row.scaleName" placeholder="请选择" size="small">
+                    <el-option label="6分钟步行试验" value="6分钟步行试验" />
+                    <el-option label="疼痛评估（VAS）" value="疼痛评估（VAS）" />
+                    <el-option label="运动风险产妇妊娠风险评估表" value="运动风险产妇妊娠风险评估表" />
+                    <el-option label="Framingham心血管风险评分（女性版）" value="Framingham心血管风险评分（女性版）" />
+                    <el-option label="呼吸量表-BODE指数" value="呼吸量表-BODE指数" />
+                    <el-option label="圣乔治呼吸问卷（SGRQ）" value="圣乔治呼吸问卷（SGRQ）" />
+                    <el-option label="宗氏抑郁量表" value="宗氏抑郁量表" />
+                    <el-option label="抑郁自评量表（SDS）" value="抑郁自评量表（SDS）" />
+                    <el-option label="多囊卵巢综合征运动干预前专病评估" value="多囊卵巢综合征运动干预前专病评估" />
+                    <el-option label="骨质疏松症患者评估问卷 - 身体功能量表" value="骨质疏松症患者评估问卷 - 身体功能量表" />
+                    <el-option label="PHQ-9量表" value="PHQ-9量表" />
+                    <el-option label="食物频率法问卷调查(FFQ)" value="食物频率法问卷调查(FFQ)" />
+                    <el-option label="RPE量表-改良博格量表 (Borg CR10 Scale)" value="RPE量表-改良博格量表 (Borg CR10 Scale)" />
+                    <el-option label="妊娠期糖尿病风险评估表" value="妊娠期糖尿病风险评估表" />
+                    <el-option label="肌少症改良版SARC-F量表 (SARC-CalF)" value="肌少症改良版SARC-F量表 (SARC-CalF)" />
+                    <el-option label="自主感觉劳累分级表" value="自主感觉劳累分级表" />
+                    <el-option label="血糖监测记录表" value="血糖监测记录表" />
+                    <el-option label="坐站试验评估量表" value="坐站试验评估量表" />
+                    <el-option label="6分钟步行试验登记表" value="6分钟步行试验登记表" />
+                    <el-option label="呼吸量表-改良英国医学研究学会呼吸困难量表" value="呼吸量表-改良英国医学研究学会呼吸困难量表" />
+                    <el-option label="爱丁堡产后抑郁量表(EPDS)" value="爱丁堡产后抑郁量表(EPDS)" />
+                    <el-option label="功能性动作筛查诊断记录表" value="功能性动作筛查诊断记录表" />
+                    <el-option label="妊娠期高血压风险评估量表" value="妊娠期高血压风险评估量表" />
+                    <el-option label="EuroQol健康指数量表EQ-5D" value="EuroQol健康指数量表EQ-5D" />
+                    <el-option label="PCOS相关生活质量问卷（PCOSQ-5）" value="PCOS相关生活质量问卷（PCOSQ-5）" />
+                  </el-select>
+                </template>
+              </el-table-column>
 
-                  <div class="assessment-field">
-                    <span class="field-label">执行周期（周）：</span>
-                    <el-input-number
-                      v-model="item.cycleDuration"
-                      :min="0"
-                      :max="52"
-                      size="small"
-                      style="width: 110px;"
-                    />
-                  </div>
+              <!-- 执行频率 -->
+              <el-table-column label="执行频率" align="center" min-width="150">
+                <template slot-scope="scope">
+                  <el-select v-model="scope.row.executionFrequency" placeholder="请选择" size="small">
+                    <el-option label="1次/周" value="1次/周" />
+                    <el-option label="2次/周" value="2次/周" />
+                    <el-option label="3次/周" value="3次/周" />
+                    <el-option label="4次/周" value="4次/周" />
+                    <el-option label="5次/周" value="5次/周" />
+                    <el-option label="6次/周" value="6次/周" />
+                    <el-option label="7次/周" value="7次/周" />
+                  </el-select>
+                </template>
+              </el-table-column>
 
-                  <div class="assessment-field">
-                    <span class="field-label">总次数（次）：</span>
-                    <el-input-number
-                      v-model="item.totalTimes"
-                      :min="1"
-                      :max="1000"
-                      size="small"
-                      style="width: 110px;"
-                    />
-                  </div>
+              <!-- 周期（周） -->
+              <el-table-column label="周期（周）" align="center" min-width="180">
+                <template slot-scope="scope">
+                  <el-input-number
+                    v-model="scope.row.cycleDuration"
+                    :min="0"
+                    :max="52"
+                    size="small"
+                    controls-position="right"
+                  />
+                </template>
+              </el-table-column>
 
-                  <div class="assessment-field">
-                    <span class="field-label">备注：</span>
-                    <el-input v-model="item.remarks" placeholder="请输入" size="small" style="width: 200px;" />
-                  </div>
+              <!-- 总次数（次） -->
+              <el-table-column label="总次数（次）" align="center" min-width="150">
+                <template slot-scope="scope">
+                  <el-input-number
+                    v-model="scope.row.totalTimes"
+                    :min="1"
+                    :max="1000"
+                    size="small"
+                    controls-position="right"
+                  />
+                </template>
+              </el-table-column>
 
-                  <div class="assessment-field">
-                    <el-button
-                      type="danger"
-                      icon="el-icon-delete"
-                      size="small"
-                      circle
-                      @click="handleDeleteSingleAssessment(index)"
-                    />
-                  </div>
-                </div>
-              </div>
+              <!-- 备注 -->
+              <el-table-column label="备注" align="center" min-width="200">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.remarks" placeholder="请输入" size="small" />
+                </template>
+              </el-table-column>
+
+              <!-- 操作 -->
+              <el-table-column label="操作" align="center" width="120" fixed="right">
+                <template slot-scope="scope">
+                  <el-button
+                    type="text"
+                    size="small"
+                    class="preview-btn"
+                    @click="handlePreviewAssessment(scope.$index)"
+                  >
+                    预览
+                  </el-button>
+                  <el-button
+                    type="text"
+                    size="small"
+                    class="delete-btn"
+                    @click="handleDeleteSingleAssessment(scope.$index)"
+                  >
+                    删除
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+
+            <!-- 分页 -->
+            <div class="assessment-pagination">
+              <span class="pagination-info">共 {{ assessmentList.length }} 条记录</span>
+              <el-pagination
+                :current-page="1"
+                :page-size="10"
+                :total="assessmentList.length"
+                layout="prev, pager, next, sizes"
+                :page-sizes="[10, 20, 50]"
+              />
             </div>
           </div>
         </el-tab-pane>
@@ -1343,21 +1389,24 @@ export default {
 
     /** 保存运动处方 */
     handleSavePrescription() {
-      // 验证是否至少有一个运动项目且填写完整
-      if (this.exerciseList.length === 0) {
-        this.$message.warning('请至少添加一个运动项目')
+      // 获取选中的行
+      const selectedRows = this.$refs.prescriptionTable.selection
+
+      // 验证是否至少选中一条记录
+      if (!selectedRows || selectedRows.length === 0) {
+        this.$message.warning('请至少选中一条记录')
         return
       }
 
-      // 验证所有运动项目是否填写完整
-      const incompleteItems = this.exerciseList.filter(item =>
+      // 验证选中的运动项目是否填写完整
+      const incompleteItems = selectedRows.filter(item =>
         !item.exerciseScene || !item.exerciseType || !item.exerciseMethod ||
         !item.durationMinutes || !item.exerciseFrequency || !item.exerciseIntensity ||
         !item.cycleWeeks || !item.totalSessions
       )
 
       if (incompleteItems.length > 0) {
-        this.$message.warning('请完善所有运动项目的必填信息')
+        this.$message.warning('请完善所有选中运动项目的必填信息')
         return
       }
 
@@ -1367,7 +1416,7 @@ export default {
         schemeId: this.schemeId,
         patientId: this.patientInfo.id,
         diseaseType: this.patientInfo.diseaseType,
-        exerciseList: this.exerciseList.map(item => ({
+        exerciseList: selectedRows.map(item => ({
           exerciseScene: item.exerciseScene,
           exerciseType: item.exerciseType,
           exerciseMethod: item.exerciseMethod,
@@ -1388,7 +1437,7 @@ export default {
 
       // 调用后端API保存运动处方
       savePrescription(prescriptionData)
-        .then(response => {
+        .then(() => {
           this.$message.success('运动处方保存成功')
           this.prescriptionSaving = false
         })
@@ -1401,21 +1450,24 @@ export default {
 
     /** 提交运动处方 */
     handleSubmitPrescription() {
-      // 验证是否至少有一个运动项目且填写完整
-      if (this.exerciseList.length === 0) {
-        this.$message.warning('请至少添加一个运动项目')
+      // 获取选中的行
+      const selectedRows = this.$refs.prescriptionTable.selection
+
+      // 验证是否至少选中一条记录
+      if (!selectedRows || selectedRows.length === 0) {
+        this.$message.warning('请至少选中一条记录')
         return
       }
 
-      // 验证所有运动项目是否填写完整
-      const incompleteItems = this.exerciseList.filter(item =>
+      // 验证选中的运动项目是否填写完整
+      const incompleteItems = selectedRows.filter(item =>
         !item.exerciseScene || !item.exerciseType || !item.exerciseMethod ||
         !item.durationMinutes || !item.exerciseFrequency || !item.exerciseIntensity ||
         !item.cycleWeeks || !item.totalSessions
       )
 
       if (incompleteItems.length > 0) {
-        this.$message.warning('请完善所有运动项目的必填信息')
+        this.$message.warning('请完善所有选中运动项目的必填信息')
         return
       }
 
@@ -1425,7 +1477,7 @@ export default {
         schemeId: this.schemeId,
         patientId: this.patientInfo.id,
         diseaseType: this.patientInfo.diseaseType,
-        exerciseList: this.exerciseList.map(item => ({
+        exerciseList: selectedRows.map(item => ({
           exerciseScene: item.exerciseScene,
           exerciseType: item.exerciseType,
           exerciseMethod: item.exerciseMethod,
@@ -1446,7 +1498,7 @@ export default {
 
       // 调用后端API保存运动处方
       savePrescription(prescriptionData)
-        .then(response => {
+        .then(() => {
           this.$message.success('运动处方提交成功')
           this.prescriptionSaving = false
           // 启用评定计划标签页并跳转
@@ -1472,6 +1524,17 @@ export default {
       })
     },
 
+    /** 预览评定量表 */
+    handlePreviewAssessment(index) {
+      const assessment = this.assessmentList[index]
+      if (!assessment.scaleName) {
+        this.$message.warning('请先选择量表名称')
+        return
+      }
+      this.$message.info(`预览量表: ${assessment.scaleName}`)
+      // TODO: 实现量表预览功能
+    },
+
     /** 删除单个评定项目 */
     handleDeleteSingleAssessment(index) {
       this.$confirm('确认删除该评定项目吗？', '提示', {
@@ -1484,19 +1547,22 @@ export default {
 
     /** 保存评定计划 */
     handleSaveAssessment() {
-      // 验证是否至少有一个评定项目且填写完整
-      if (this.assessmentList.length === 0) {
-        this.$message.warning('请至少添加一个评定项目')
+      // 获取选中的行
+      const selectedRows = this.$refs.assessmentTable.selection
+
+      // 验证是否至少选中一条记录
+      if (!selectedRows || selectedRows.length === 0) {
+        this.$message.warning('请至少选中一条记录')
         return
       }
 
-      // 验证所有评定项目是否填写完整
-      const incompleteItems = this.assessmentList.filter(item =>
+      // 验证选中的评定项目是否填写完整
+      const incompleteItems = selectedRows.filter(item =>
         !item.executionType || !item.scaleName || !item.executionFrequency
       )
 
       if (incompleteItems.length > 0) {
-        this.$message.warning('请完善所有评定项目的必填信息')
+        this.$message.warning('请完善所有选中评定项目的必填信息')
         return
       }
 
@@ -1506,7 +1572,7 @@ export default {
         schemeId: this.schemeId,
         patientId: this.patientInfo.id,
         diseaseType: this.patientInfo.diseaseType,
-        assessmentList: this.assessmentList.map(item => ({
+        assessmentList: selectedRows.map(item => ({
           executionType: item.executionType,
           scaleName: item.scaleName,
           executionFrequency: item.executionFrequency,
@@ -1520,7 +1586,7 @@ export default {
 
       // 调用后端API保存评定计划
       saveAssessment(assessmentData)
-        .then(response => {
+        .then(() => {
           this.$message.success('评定计划保存成功')
           this.assessmentSaving = false
         })
@@ -1533,19 +1599,22 @@ export default {
 
     /** 提交评定计划 */
     handleSubmitAssessment() {
-      // 验证是否至少有一个评定项目且填写完整
-      if (this.assessmentList.length === 0) {
-        this.$message.warning('请至少添加一个评定项目')
+      // 获取选中的行
+      const selectedRows = this.$refs.assessmentTable.selection
+
+      // 验证是否至少选中一条记录
+      if (!selectedRows || selectedRows.length === 0) {
+        this.$message.warning('请至少选中一条记录')
         return
       }
 
-      // 验证所有评定项目是否填写完整
-      const incompleteItems = this.assessmentList.filter(item =>
+      // 验证选中的评定项目是否填写完整
+      const incompleteItems = selectedRows.filter(item =>
         !item.executionType || !item.scaleName || !item.executionFrequency
       )
 
       if (incompleteItems.length > 0) {
-        this.$message.warning('请完善所有评定项目的必填信息')
+        this.$message.warning('请完善所有选中评定项目的必填信息')
         return
       }
 
@@ -1555,7 +1624,7 @@ export default {
         schemeId: this.schemeId,
         patientId: this.patientInfo.id,
         diseaseType: this.patientInfo.diseaseType,
-        assessmentList: this.assessmentList.map(item => ({
+        assessmentList: selectedRows.map(item => ({
           executionType: item.executionType,
           scaleName: item.scaleName,
           executionFrequency: item.executionFrequency,
@@ -1569,7 +1638,7 @@ export default {
 
       // 调用后端API保存评定计划
       saveAssessment(assessmentData)
-        .then(response => {
+        .then(() => {
           this.$message.success('评定计划提交成功')
           this.assessmentSaving = false
 
@@ -2049,49 +2118,72 @@ export default {
   padding: 20px;
 
   .patient-info-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
+    border: 1px solid #ebeef5;
+    box-shadow: none;
 
     ::v-deep .el-card__body {
-      padding: 20px;
+      padding: 0;
     }
 
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px 30px;
-      color: white;
+    // 表格样式 - 无边框
+    ::v-deep .el-table {
+      // 去除所有边框
+      border: none;
 
-      .info-item {
-        display: flex;
-        align-items: center;
+      &::before {
+        display: none; // 去除底部边框
+      }
 
-        .label {
-          font-size: 14px;
-          opacity: 0.9;
-          white-space: nowrap;
-          margin-right: 8px;
-        }
+      th, td {
+        border: none; // 去除单元格边框
+      }
 
-        .value {
-          font-size: 14px;
-          font-weight: 500;
-          flex: 1;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+      // 表头样式
+      th {
+        background-color: transparent;
+        color: rgb(144, 126, 179);
+        font-weight: 500;
+        padding: 16px 20px;
+        white-space: nowrap;
+        text-align: center !important; // 强制居中
+      }
+
+      // 表头内容容器
+      .cell {
+        padding: 0;
+        text-align: center;
+      }
+
+      // 内容样式
+      td {
+        padding: 16px 20px;
+        color: #303133;
+        white-space: nowrap;
+        text-align: center !important; // 强制居中
+
+        .cell {
+          padding: 0;
+          text-align: center;
         }
       }
+
+      // 表格布局自动
+      table-layout: fixed;
     }
   }
 
   ::v-deep .el-tabs__item {
     font-size: 16px;
     font-weight: 500;
+    color: rgb(144, 126, 179);
   }
 
   ::v-deep .el-tabs__item.is-active {
-    color: #409eff;
+    color: rgb(144, 126, 179);
+  }
+
+  ::v-deep .el-tabs__active-bar {
+    background-color: rgb(144, 126, 179);
   }
 
   ::v-deep .el-tabs__item.is-disabled {
@@ -2106,37 +2198,59 @@ export default {
     }
   }
 
-  .archive-info-container {
-    margin: 20px 0;
-    padding: 20px;
-    background-color: #f5f7fa;
-    border-radius: 4px;
+  // 档案按钮样式
+  .archive-btn {
+    background-color: rgb(144, 126, 179);
+    border-color: rgb(144, 126, 179);
+    color: #fff;
+    padding: 7px 20px;
 
-    .archive-info-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 0;
-      border-bottom: 1px solid #e4e7ed;
+    &:hover,
+    &:focus {
+      background-color: rgb(134, 116, 169);
+      border-color: rgb(134, 116, 169);
+      color: #fff;
+    }
 
-      &:last-child {
-        border-bottom: none;
-      }
-
-      .archive-label {
-        font-size: 14px;
-        color: #303133;
-        font-weight: 500;
-      }
+    &:active {
+      background-color: rgb(124, 106, 159);
+      border-color: rgb(124, 106, 159);
     }
   }
 
+  // 保存按钮样式
+  .save-btn {
+    background-color: rgb(144, 126, 179);
+    border-color: rgb(144, 126, 179);
+    color: #fff;
+    padding: 10px 30px;
+    font-size: 14px;
+
+    &:hover,
+    &:focus {
+      background-color: rgb(134, 116, 169);
+      border-color: rgb(134, 116, 169);
+      color: #fff;
+    }
+
+    &:active {
+      background-color: rgb(124, 106, 159);
+      border-color: rgb(124, 106, 159);
+    }
+
+    &.is-disabled {
+      background-color: #d1c4dc;
+      border-color: #d1c4dc;
+      color: #fff;
+      cursor: not-allowed;
+    }
+  }
+
+  // 运动处方按钮样式
   .prescription-header {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e4e7ed;
 
     .header-actions {
       display: flex;
@@ -2144,89 +2258,91 @@ export default {
     }
   }
 
-  .exercise-table-wrapper {
-    max-height: 500px;
-    overflow-y: auto;
-    border: 1px solid #e4e7ed;
-    border-radius: 4px;
+  .prescription-action-btn {
+    background-color: rgb(144, 126, 179);
+    border-color: rgb(144, 126, 179);
+    color: #fff;
 
-    .exercise-row {
-      border-bottom: 1px solid #e4e7ed;
+    &:hover,
+    &:focus {
+      background-color: rgb(134, 116, 169);
+      border-color: rgb(134, 116, 169);
+      color: #fff;
+    }
 
-      &:last-child {
-        border-bottom: none;
-      }
-
-      .exercise-field-row {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        background-color: #fff;
-        gap: 15px;
-        overflow-x: auto;
-        min-height: 60px;
-
-        &:hover {
-          background-color: #f5f7fa;
-        }
-
-        .exercise-field {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-shrink: 0;
-
-          .field-label {
-            font-size: 14px;
-            color: #606266;
-            white-space: nowrap;
-          }
-
-          .field-value {
-            font-size: 14px;
-            color: #303133;
-            font-weight: 500;
-          }
-        }
-      }
-
-      /* 横向滚动条样式 */
-      .exercise-field-row::-webkit-scrollbar {
-        height: 8px;
-      }
-
-      .exercise-field-row::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-      }
-
-      .exercise-field-row::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 4px;
-
-        &:hover {
-          background: #a8a8a8;
-        }
-      }
+    &:active {
+      background-color: rgb(124, 106, 159);
+      border-color: rgb(124, 106, 159);
     }
   }
 
-  /* 纵向滚动条样式 */
-  .exercise-table-wrapper::-webkit-scrollbar {
-    width: 8px;
+  .save-action-btn {
+    background-color: rgb(144, 126, 179);
+    border-color: rgb(144, 126, 179);
+
+    &:hover,
+    &:focus {
+      background-color: rgb(134, 116, 169);
+      border-color: rgb(134, 116, 169);
+    }
   }
 
-  .exercise-table-wrapper::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+  // 运动处方表格样式
+  .prescription-table {
+    ::v-deep .el-table__header {
+      th {
+        background-color: rgb(250, 250, 250);
+        color: rgb(38, 38, 38);
+        font-weight: 500;
+        padding: 12px 0;
+      }
+    }
+
+    ::v-deep .el-table__body {
+      td {
+        padding: 8px 0;
+      }
+
+      .cell {
+        padding: 0 8px;
+      }
+    }
+
+    ::v-deep .el-input__inner,
+    ::v-deep .el-input-number__input {
+      text-align: center;
+    }
+
+    // 横向滚动条样式
+    ::v-deep .el-table__body-wrapper::-webkit-scrollbar {
+      height: 12px;
+    }
+
+    ::v-deep .el-table__body-wrapper::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 6px;
+    }
+
+    ::v-deep .el-table__body-wrapper::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 6px;
+
+      &:hover {
+        background: #a8a8a8;
+      }
+    }
+
+    // 固定列阴影
+    ::v-deep .el-table__fixed-right {
+      box-shadow: -3px 0 10px rgba(0, 0, 0, 0.1);
+    }
   }
 
-  .exercise-table-wrapper::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
+  .delete-btn {
+    color: rgb(144, 126, 179);
 
     &:hover {
-      background: #a8a8a8;
+      color: rgb(134, 116, 169);
     }
   }
 
@@ -2235,8 +2351,6 @@ export default {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e4e7ed;
 
     .header-actions {
       display: flex;
@@ -2244,87 +2358,103 @@ export default {
     }
   }
 
-  .assessment-table-wrapper {
-    max-height: 500px;
-    overflow-y: auto;
-    border: 1px solid #e4e7ed;
-    border-radius: 4px;
+  .assessment-action-btn {
+    background-color: rgb(144, 126, 179);
+    border-color: rgb(144, 126, 179);
+    color: #fff;
 
-    .assessment-row {
-      border-bottom: 1px solid #e4e7ed;
+    &:hover,
+    &:focus {
+      background-color: rgb(134, 116, 169);
+      border-color: rgb(134, 116, 169);
+      color: #fff;
+    }
 
-      &:last-child {
-        border-bottom: none;
-      }
-
-      .assessment-field-row {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        background-color: #fff;
-        gap: 15px;
-        overflow-x: auto;
-        min-height: 60px;
-
-        &:hover {
-          background-color: #f5f7fa;
-        }
-
-        .assessment-field {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-shrink: 0;
-
-          .field-label {
-            font-size: 14px;
-            color: #606266;
-            white-space: nowrap;
-          }
-
-          .field-value {
-            font-size: 14px;
-            color: #303133;
-            font-weight: 500;
-          }
-        }
-      }
-
-      .assessment-field-row::-webkit-scrollbar {
-        height: 8px;
-      }
-
-      .assessment-field-row::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-      }
-
-      .assessment-field-row::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 4px;
-
-        &:hover {
-          background: #a8a8a8;
-        }
-      }
+    &:active {
+      background-color: rgb(124, 106, 159);
+      border-color: rgb(124, 106, 159);
     }
   }
 
-  .assessment-table-wrapper::-webkit-scrollbar {
-    width: 8px;
+  // 评定计划表格样式
+  .assessment-table {
+    ::v-deep .el-table__header {
+      th {
+        background-color: rgb(250, 250, 250);
+        color: rgb(38, 38, 38);
+        font-weight: 500;
+        padding: 12px 0;
+      }
+    }
+
+    ::v-deep .el-table__body {
+      td {
+        padding: 8px 0;
+      }
+
+      .cell {
+        padding: 0 8px;
+      }
+    }
+
+    ::v-deep .el-input__inner,
+    ::v-deep .el-input-number__input {
+      text-align: center;
+    }
+
+    // 横向滚动条样式
+    ::v-deep .el-table__body-wrapper::-webkit-scrollbar {
+      height: 12px;
+    }
+
+    ::v-deep .el-table__body-wrapper::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 6px;
+    }
+
+    ::v-deep .el-table__body-wrapper::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 6px;
+
+      &:hover {
+        background: #a8a8a8;
+      }
+    }
+
+    // 固定列阴影
+    ::v-deep .el-table__fixed-right {
+      box-shadow: -3px 0 10px rgba(0, 0, 0, 0.1);
+    }
   }
 
-  .assessment-table-wrapper::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-  }
-
-  .assessment-table-wrapper::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
+  .preview-btn {
+    color: rgb(144, 126, 179);
 
     &:hover {
-      background: #a8a8a8;
+      color: rgb(134, 116, 169);
+    }
+  }
+
+  .assessment-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 20px;
+    gap: 20px;
+
+    .pagination-info {
+      font-size: 14px;
+      color: #606266;
+    }
+
+    ::v-deep .el-pagination {
+      .el-pager li.active {
+        color: rgb(144, 126, 179);
+      }
+
+      .el-pager li:hover {
+        color: rgb(144, 126, 179);
+      }
     }
   }
 
@@ -2374,15 +2504,15 @@ export default {
         min-width: 0;
 
         .info-label {
-          font-size: 14px;
-          color: #606266;
+          font-size: 19px;
+          color: rgb(24, 28, 24);
           white-space: nowrap;
           font-weight: 500;
         }
 
         .info-value {
-          font-size: 14px;
-          color: #303133;
+          font-size: 19px;
+          color: rgb(24, 28, 24);
           margin-left: 5px;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -2390,7 +2520,7 @@ export default {
         }
 
         .edit-link {
-          font-size: 14px;
+          font-size: 19px;
           color: #409eff;
           margin-left: 8px;
           text-decoration: none;

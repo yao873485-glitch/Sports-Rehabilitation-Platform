@@ -187,17 +187,6 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="内容应用配置" width="140" align="center">
-          <template slot-scope="scope">
-            <el-button
-              type="text"
-              size="small"
-              @click="handleConfig(scope.row)"
-            >
-              配置
-            </el-button>
-          </template>
-        </el-table-column>
         <el-table-column prop="articleUrl" label="文章链接" width="150" show-overflow-tooltip>
           <template slot-scope="scope">
             <el-link v-if="scope.row.articleUrl" :href="scope.row.articleUrl" target="_blank" type="primary">
@@ -315,7 +304,7 @@
 </template>
 
 <script>
-import { getContentManagementList, updateContentStatus, deleteContent, getVideoAssetDetail, getContentDetail } from '@/api/education'
+import { getContentManagementList, getVideoAssetDetail, getContentDetail } from '@/api/education'
 
 export default {
   name: 'ContentManagement',
@@ -341,11 +330,8 @@ export default {
         pageSize: 10,
         total: 0
       },
-      // 对话框显示状态
-      detailDialogVisible: false,
+      // 预览对话框
       previewDialogVisible: false,
-      // 当前操作的内容
-      currentContent: null,
       previewContent: null
     }
   },
@@ -464,49 +450,12 @@ export default {
     handleConfig(row) {
       this.$router.push({
         path: '/education/content-config',
-        query: { id: row.id }
+        query: {
+          contentId: row.contentId,
+          contentType: row.contentType,
+          title: row.contentTitle
+        }
       })
-    },
-    // 上架/下架
-    async handleToggleStatus(row) {
-      const newStatus = row.status === '已上架' ? '未上架' : '已上架'
-      const action = newStatus === '已上架' ? '上架' : '下架'
-
-      try {
-        await this.$confirm(`确定要${action}该内容吗？`, '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-
-        await updateContentStatus(row.id, newStatus)
-        this.$message.success(`${action}成功`)
-        this.fetchData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          this.$message.error(`${action}失败`)
-          console.error(`${action}失败:`, error)
-        }
-      }
-    },
-    // 删除
-    async handleDelete(row) {
-      try {
-        await this.$confirm('确定要删除该内容吗？删除后不可恢复！', '警告', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-
-        await deleteContent(row.id)
-        this.$message.success('删除成功')
-        this.fetchData()
-      } catch (error) {
-        if (error !== 'cancel') {
-          this.$message.error('删除失败')
-          console.error('删除失败:', error)
-        }
-      }
     },
     // 分页大小改变
     handleSizeChange(val) {
@@ -563,18 +512,6 @@ export default {
       margin-right: 20px;
       color: #606266;
       font-size: 14px;
-    }
-  }
-
-  .content-detail {
-    padding: 20px 0;
-
-    .description-content, .config-content {
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-height: 200px;
-      overflow-y: auto;
     }
   }
 

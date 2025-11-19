@@ -91,4 +91,37 @@ export default {
 .pagination-container.hidden {
   display: none;
 }
+
+// 修改分页组件的颜色主题
+::v-deep .el-pagination {
+  // 当前页码背景色
+  .el-pager li.active {
+    background-color: rgb(106, 91, 140) !important;
+    color: #fff !important;
+  }
+
+  // 鼠标悬停时的颜色
+  .el-pager li:hover {
+    color: rgb(106, 91, 140) !important;
+  }
+
+  // 当前页码悬停时保持白色文字
+  .el-pager li.active:hover {
+    background-color: rgb(106, 91, 140) !important;
+    color: #fff !important;
+  }
+
+  // 上一页/下一页按钮悬停
+  .btn-prev:hover,
+  .btn-next:hover {
+    color: rgb(106, 91, 140) !important;
+  }
+
+  // 跳转按钮样式
+  .el-pagination__jump {
+    .el-input__inner:focus {
+      border-color: rgb(106, 91, 140) !important;
+    }
+  }
+}
 </style>

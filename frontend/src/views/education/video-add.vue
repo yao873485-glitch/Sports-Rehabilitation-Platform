@@ -53,23 +53,8 @@
           <el-button type="text" style="margin-left: 10px;" v-if="!isReadOnly">选择</el-button>
         </el-form-item>
 
-        <!-- 所属板块 -->
-        <el-form-item label="所属板块" prop="categorySection" required>
-          <el-select
-            v-model="videoForm.categorySection"
-            placeholder="请选择所属板块"
-            style="width: 200px;"
-            :disabled="isReadOnly"
-          >
-            <el-option label="医教" value="医教" />
-            <el-option label="康复" value="康复" />
-            <el-option label="术后护理" value="术后护理" />
-            <el-option label="营养指导" value="营养指导" />
-          </el-select>
-        </el-form-item>
-
         <!-- 发布时间 -->
-        <el-form-item label="发布时间" prop="publishTime">
+        <el-form-item label="发布时间" prop="publishTime" required>
           <el-date-picker
             v-model="videoForm.publishTime"
             type="datetime"
@@ -80,8 +65,8 @@
           />
         </el-form-item>
 
-        <!-- 是否支持游戏模式 -->
-        <el-form-item label="是否支持游戏模式" prop="supportGameMode">
+        <!-- 是否支持游客模式 -->
+        <el-form-item label="是否支持游客模式" prop="supportGameMode" required>
           <el-radio-group v-model="videoForm.supportGameMode" :disabled="isReadOnly">
             <el-radio :label="1">支持</el-radio>
             <el-radio :label="0">不支持</el-radio>
@@ -89,7 +74,7 @@
         </el-form-item>
 
         <!-- 是否原创 -->
-        <el-form-item label="是否原创" prop="isOriginal">
+        <el-form-item label="是否原创" prop="isOriginal" required>
           <el-radio-group v-model="videoForm.isOriginal" :disabled="isReadOnly">
             <el-radio :label="1">是</el-radio>
             <el-radio :label="0">否</el-radio>
@@ -97,7 +82,7 @@
         </el-form-item>
 
         <!-- 视频描述 -->
-        <el-form-item label="视频描述" prop="videoDescription">
+        <el-form-item label="视频描述" prop="videoDescription" required>
           <el-input
             v-model="videoForm.videoDescription"
             type="textarea"
@@ -112,14 +97,15 @@
         </el-form-item>
 
         <!-- 封面图 -->
-        <el-form-item label="封面图" prop="coverImage">
+        <el-form-item label="封面图" prop="coverImage" required>
           <div class="upload-container">
             <el-upload
               v-if="!isReadOnly"
               class="cover-uploader"
-              action="/api/upload"
+              action="/api/file/upload/exercise-image"
               :show-file-list="false"
               :on-success="handleCoverUploadSuccess"
+              :on-error="handleCoverUploadError"
               :before-upload="beforeCoverUpload"
               accept="image/*"
             >
@@ -130,54 +116,54 @@
             </el-upload>
             <img v-if="isReadOnly && videoForm.coverImage" :src="videoForm.coverImage" class="cover-image" />
             <div class="upload-tips" v-if="!isReadOnly">
-              当前图片仅允许上传文件类型，最大3张图片，图片不超过370*225
+              封面应为JPG/PNG格式，最多3张图片，图片不超过370*225，大小不超过10MB
             </div>
+            <el-button v-if="videoForm.coverImage && !isReadOnly" size="small" type="danger" @click="handleRemoveCoverImage" style="margin-top: 10px;">删除图片</el-button>
           </div>
         </el-form-item>
 
         <!-- 视频来源 -->
-        <el-form-item label="视频来源" prop="videoSource">
+        <el-form-item label="视频来源" prop="videoSource" required>
           <el-radio-group v-model="videoForm.videoSource" :disabled="isReadOnly">
             <el-radio label="本地上传">本地上传</el-radio>
             <el-radio label="在线文件地址">在线文件地址</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <!-- 文件地址（在线文件地址） -->
-        <el-form-item label="文件地址" prop="videoUrl" v-if="videoForm.videoSource === '在线文件地址'">
-          <el-input
-            v-model="videoForm.videoUrl"
-            placeholder="请输入视频URL地址"
-            style="width: 100%;"
-            :disabled="isReadOnly"
-          />
-          <el-button v-if="!isReadOnly" type="primary" plain size="small" style="margin-top: 10px;">上传</el-button>
-          <div class="upload-tips" v-if="!isReadOnly">支持 wav avi mp4, 建议小于200M</div>
-        </el-form-item>
-
-        <!-- 文件上传（本地上传） -->
-        <el-form-item label="文件地址" prop="videoUrl" v-if="videoForm.videoSource === '本地上传'">
-          <el-upload
-            v-if="!isReadOnly"
-            class="video-uploader"
-            action="/api/upload/video"
-            :show-file-list="true"
-            :on-success="handleVideoUploadSuccess"
-            :before-upload="beforeVideoUpload"
-            accept="video/*"
-            :file-list="videoFileList"
-          >
-            <el-button type="primary" plain size="small">上传</el-button>
-          </el-upload>
-          <div v-if="isReadOnly && videoForm.videoUrl" class="video-url-display">{{ videoForm.videoUrl }}</div>
-          <div class="upload-tips" v-if="!isReadOnly">支持 wav avi mp4, 建议小于200M</div>
+        <!-- 文件地址 -->
+        <el-form-item label="文件地址" prop="videoUrl" required>
+          <div class="video-url-container">
+            <el-input
+              v-model="videoForm.videoUrl"
+              placeholder="请输入视频文件地址或上传视频文件"
+              style="width: 100%;"
+              :disabled="isReadOnly || uploadingVideo"
+            />
+            <el-upload
+              v-if="!isReadOnly"
+              class="video-uploader-inline"
+              action="/api/file/upload/exercise-image"
+              :show-file-list="false"
+              :on-success="handleVideoUploadSuccess"
+              :on-error="handleVideoUploadError"
+              :before-upload="beforeVideoUpload"
+              accept="video/*"
+              style="margin-top: 10px;"
+            >
+              <el-button size="small" type="primary" :loading="uploadingVideo">
+                <i class="el-icon-upload" v-if="!uploadingVideo"></i>
+                {{ uploadingVideo ? '上传中...' : '上传视频文件' }}
+              </el-button>
+            </el-upload>
+          </div>
+          <div class="upload-tips" v-if="!isReadOnly">支持MP4、AVI、MOV等格式，大小不超过100MB</div>
         </el-form-item>
 
         <!-- 所属模块 -->
-        <el-form-item label="所属模块" prop="moduleCategory">
+        <el-form-item label="所属模块" prop="moduleCategory" required>
           <el-radio-group v-model="videoForm.moduleCategory" :disabled="isReadOnly">
             <el-radio label="医教">医教</el-radio>
-            <el-radio label="直数">直数</el-radio>
+            <el-radio label="患教">患教</el-radio>
           </el-radio-group>
         </el-form-item>
 
@@ -225,12 +211,12 @@ export default {
     return {
       mode: 'add', // add, edit, copy, preview, detail
       videoId: null,
+      uploadingVideo: false,
       videoForm: {
         contentType: '视频',
         videoTitle: '',
         author: '系统管理员',
         authorType: '平台运营',
-        categorySection: '医教',
         publishTime: null,
         supportGameMode: 1,
         isOriginal: 1,
@@ -250,14 +236,30 @@ export default {
           { required: true, message: '请输入视频标题', trigger: 'blur' },
           { max: 50, message: '标题长度不能超过50个字符', trigger: 'blur' }
         ],
-        categorySection: [
-          { required: true, message: '请选择所属板块', trigger: 'change' }
+        publishTime: [
+          { required: true, message: '请选择发布时间', trigger: 'change' }
         ],
-        author: [
-          { required: true, message: '请输入作者', trigger: 'blur' }
+        supportGameMode: [
+          { required: true, message: '请选择是否支持游客模式', trigger: 'change' }
+        ],
+        isOriginal: [
+          { required: true, message: '请选择是否原创', trigger: 'change' }
         ],
         videoDescription: [
+          { required: true, message: '请输入视频描述', trigger: 'blur' },
           { max: 300, message: '描述长度不能超过300个字符', trigger: 'blur' }
+        ],
+        coverImage: [
+          { required: true, message: '请上传封面图', trigger: 'change' }
+        ],
+        videoSource: [
+          { required: true, message: '请选择视频来源', trigger: 'change' }
+        ],
+        videoUrl: [
+          { required: true, message: '请输入或上传视频文件', trigger: 'blur' }
+        ],
+        moduleCategory: [
+          { required: true, message: '请选择所属模块', trigger: 'change' }
         ]
       },
       videoFileList: []
@@ -341,42 +343,65 @@ export default {
     // 封面图上传前验证
     beforeCoverUpload(file) {
       const isImage = file.type.startsWith('image/')
-      const isLt2M = file.size / 1024 / 1024 < 2
+      const isLt10M = file.size / 1024 / 1024 < 10
 
       if (!isImage) {
         this.$message.error('只能上传图片文件!')
         return false
       }
-      if (!isLt2M) {
-        this.$message.error('图片大小不能超过 2MB!')
+      if (!isLt10M) {
+        this.$message.error('图片大小不能超过 10MB!')
         return false
       }
       return true
     },
+    // 封面图上传失败
+    handleCoverUploadError(err) {
+      console.error('上传失败:', err)
+      this.$message.error('图片上传失败,请重试')
+    },
+    // 删除封面图
+    handleRemoveCoverImage() {
+      this.$confirm('确认删除该图片?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.videoForm.coverImage = ''
+        this.$message.success('删除成功')
+      }).catch(() => {})
+    },
     // 视频上传成功
-    handleVideoUploadSuccess(response, file) {
+    handleVideoUploadSuccess(response) {
+      this.uploadingVideo = false
       if (response.code === 200) {
         this.videoForm.videoUrl = response.data.url
-        this.videoFileList = [{ name: file.name, url: response.data.url }]
-        this.$message.success('上传成功')
+        this.$message.success('视频上传成功')
       } else {
-        this.$message.error(response.message || '上传失败')
+        this.$message.error(response.message || '视频上传失败')
       }
     },
     // 视频上传前验证
     beforeVideoUpload(file) {
       const isVideo = file.type.startsWith('video/')
-      const isLt200M = file.size / 1024 / 1024 < 200
+      const isLt100M = file.size / 1024 / 1024 < 100
 
       if (!isVideo) {
         this.$message.error('只能上传视频文件!')
         return false
       }
-      if (!isLt200M) {
-        this.$message.error('视频大小不能超过 200MB!')
+      if (!isLt100M) {
+        this.$message.error('视频大小不能超过 100MB!')
         return false
       }
+      this.uploadingVideo = true
       return true
+    },
+    // 视频上传失败
+    handleVideoUploadError(err) {
+      this.uploadingVideo = false
+      console.error('视频上传失败:', err)
+      this.$message.error('视频上传失败,请重试')
     },
     // 提交表单
     handleSubmit() {

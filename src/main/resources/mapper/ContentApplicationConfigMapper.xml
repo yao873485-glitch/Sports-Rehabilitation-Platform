@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.ContentApplicationConfigMapper">
+
+    <resultMap id="BaseResultMap" type="com.rehabilitation.entity.ContentApplicationConfig">
+        <id column="id" property="id"/>
+        <result column="content_id" property="contentId"/>
+        <result column="content_type" property="contentType"/>
+        <result column="application_module" property="applicationModule"/>
+        <result column="application_project" property="applicationProject"/>
+        <result column="channel" property="channel"/>
+        <result column="related_diseases" property="relatedDiseases"/>
+        <result column="related_symptoms" property="relatedSymptoms"/>
+        <result column="related_products" property="relatedProducts"/>
+        <result column="custom_tags" property="customTags"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="is_pinned" property="isPinned"/>
+        <result column="remark" property="remark"/>
+        <result column="operator" property="operator"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 根据内容ID和类型查询配置 -->
+    <select id="selectByContentIdAndType" resultMap="BaseResultMap">
+        SELECT * FROM content_application_config
+        WHERE content_id = #{contentId}
+          AND content_type = #{contentType}
+        LIMIT 1
+    </select>
+
+    <!-- 根据内容ID和类型删除配置 -->
+    <delete id="deleteByContentIdAndType">
+        DELETE FROM content_application_config
+        WHERE content_id = #{contentId}
+          AND content_type = #{contentType}
+    </delete>
+
+</mapper>

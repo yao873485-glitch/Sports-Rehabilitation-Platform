@@ -2,68 +2,74 @@
   <div class="app-container">
     <!-- 筛选区域 -->
     <div class="filter-container">
-      <!-- 时间筛选功能 -->
-      <div class="filter-item">
-        <label>开方日期：</label>
-        <el-date-picker
-          v-model="queryParams.dateRange"
-          type="daterange"
-          range-separator="至"
-          start-placeholder="开始时间"
-          end-placeholder="结束时间"
-          format="yyyy-MM-dd"
-          value-format="yyyy-MM-dd"
-          style="width: 300px;"
-        />
+      <!-- 第一排 -->
+      <div class="filter-row">
+        <!-- 时间筛选功能 -->
+        <div class="filter-item">
+          <label>开方日期：</label>
+          <el-date-picker
+            v-model="queryParams.dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd"
+            style="width: 340px;"
+          />
+        </div>
+
+        <!-- 病种类型筛选 -->
+        <div class="filter-item">
+          <label>病种类型：</label>
+          <el-select v-model="queryParams.diseaseType" placeholder="全部" clearable style="width: 180px;">
+            <el-option label="全部" value="" />
+            <el-option label="妊娠合并糖尿病" value="妊娠合并糖尿病" />
+            <el-option label="肥胖症" value="肥胖症" />
+            <el-option label="高血压" value="高血压" />
+            <el-option label="糖尿病" value="糖尿病" />
+          </el-select>
+        </div>
+
+        <!-- 搜索功能 -->
+        <div class="filter-item">
+          <label>搜索：</label>
+          <el-input
+            v-model="queryParams.searchKeyword"
+            placeholder="请输入患者姓名/电话/档案号"
+            style="width: 240px;"
+            clearable
+          />
+        </div>
+
+        <!-- 入组机构筛选 -->
+        <div class="filter-item">
+          <label>入组机构：</label>
+          <el-select v-model="queryParams.orgName" placeholder="全部" clearable style="width: 220px;">
+            <el-option label="全部" value="" />
+            <el-option label="西南医科大学附属医院" value="西南医科大学附属医院" />
+            <el-option label="江安县中医院" value="江安县中医院" />
+          </el-select>
+        </div>
       </div>
 
-      <!-- 病种类型筛选 -->
-      <div class="filter-item">
-        <label>病种类型：</label>
-        <el-select v-model="queryParams.diseaseType" placeholder="请选择病种类型" clearable style="width: 150px;">
-          <el-option label="全部" value="" />
-          <el-option label="妊娠合并糖尿病" value="妊娠合并糖尿病" />
-          <el-option label="肥胖症" value="肥胖症" />
-          <el-option label="高血压" value="高血压" />
-          <el-option label="糖尿病" value="糖尿病" />
-        </el-select>
-      </div>
+      <!-- 第二排 -->
+      <div class="filter-row">
+        <!-- 方案状态筛选 -->
+        <div class="filter-item">
+          <label>方案状态：</label>
+          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 150px;">
+            <el-option label="全部" value="" />
+            <el-option label="执行中" :value="1" />
+            <el-option label="已结束" :value="2" />
+          </el-select>
+        </div>
 
-      <!-- 搜索功能 -->
-      <div class="filter-item">
-        <label>搜索：</label>
-        <el-input
-          v-model="queryParams.searchKeyword"
-          placeholder="请输入患者姓名/手机号/档案号"
-          style="width: 200px;"
-          clearable
-        />
-      </div>
-
-      <!-- 入组机构筛选 -->
-      <div class="filter-item">
-        <label>入组机构：</label>
-        <el-select v-model="queryParams.orgName" placeholder="请选择入组机构" clearable style="width: 200px;">
-          <el-option label="全部" value="" />
-          <el-option label="西南医科大学附属医院" value="西南医科大学附属医院" />
-          <el-option label="江安县中医院" value="江安县中医院" />
-        </el-select>
-      </div>
-
-      <!-- 方案状态筛选 -->
-      <div class="filter-item">
-        <label>方案状态：</label>
-        <el-select v-model="queryParams.status" placeholder="请选择方案状态" clearable style="width: 120px;">
-          <el-option label="全部" value="" />
-          <el-option label="执行中" :value="1" />
-          <el-option label="已结束" :value="2" />
-        </el-select>
-      </div>
-
-      <!-- 操作按钮 -->
-      <div class="filter-item">
-        <el-button type="primary" icon="el-icon-search" @click="handleQuery">查询</el-button>
-        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+        <!-- 操作按钮 -->
+        <div class="filter-item">
+          <el-button class="custom-primary-btn" icon="el-icon-search" @click="handleQuery">查询</el-button>
+          <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+        </div>
       </div>
     </div>
 
@@ -75,12 +81,14 @@
       highlight-current-row
       style="width: 100%"
       empty-text="暂无数据"
+      :header-cell-style="{ color: 'rgb(37, 37, 37)', fontWeight: '500', backgroundColor: 'rgb(250, 250, 250)' }"
     >
       <!-- 患者信息列 -->
       <el-table-column
         label="患者信息"
-        width="130"
-        show-overflow-tooltip
+        width="160"
+        align="center"
+        header-align="center"
       >
         <template slot-scope="scope">
           <div class="patient-info">
@@ -94,10 +102,10 @@
       </el-table-column>
 
       <!-- 其他字段 -->
-      <el-table-column prop="medicalRecordNo" label="档案号" width="150" show-overflow-tooltip />
-      <el-table-column prop="schemeId" label="方案编号" width="180" show-overflow-tooltip />
-      <el-table-column prop="diseaseType" label="病种" width="150" show-overflow-tooltip />
-      <el-table-column prop="statusDesc" label="状态" width="120">
+      <el-table-column prop="medicalRecordNo" label="档案号" width="200" align="center" header-align="center" />
+      <el-table-column prop="schemeId" label="方案编号" width="220" align="center" header-align="center" />
+      <el-table-column prop="diseaseType" label="病种" width="180" align="center" header-align="center" />
+      <el-table-column label="状态" width="140" align="center" header-align="center">
         <template slot-scope="scope">
           <el-tag
             :type="scope.row.status === 1 ? 'success' : 'info'"
@@ -107,16 +115,17 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="orgName" label="入组机构" width="200" show-overflow-tooltip />
-      <el-table-column prop="createTime" label="创建时间" width="160" />
-      <el-table-column prop="endTime" label="结束时间" width="160" />
+      <el-table-column prop="orgName" label="入组机构" width="220" align="center" header-align="center" />
+      <el-table-column prop="createTime" label="创建时间" width="180" align="center" header-align="center" />
+      <el-table-column prop="endTime" label="结束时间" width="180" align="center" header-align="center" />
 
       <!-- 操作列 - 固定右侧 -->
       <el-table-column
         label="操作"
-        width="120"
+        width="180"
         fixed="right"
         align="center"
+        header-align="center"
       >
         <template slot-scope="scope">
           <el-button
@@ -315,10 +324,18 @@ export default {
 
 <style lang="scss" scoped>
 .filter-container {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
   margin-bottom: 20px;
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 
   .filter-item {
     display: flex;
@@ -330,6 +347,7 @@ export default {
       margin-right: 8px;
       font-weight: 500;
       white-space: nowrap;
+      color: #606266;
     }
 
     // 日期选择器特殊样式
@@ -349,9 +367,29 @@ export default {
   }
 }
 
+// 自定义按钮样式
+.custom-primary-btn {
+  background-color: rgb(144, 126, 179);
+  border-color: rgb(144, 126, 179);
+  color: #fff;
+
+  &:hover,
+  &:focus {
+    background-color: rgb(134, 116, 169);
+    border-color: rgb(134, 116, 169);
+    color: #fff;
+  }
+
+  &:active {
+    background-color: rgb(124, 106, 159);
+    border-color: rgb(124, 106, 159);
+  }
+}
+
 .patient-info {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 
   .patient-name {
@@ -389,10 +427,57 @@ export default {
   }
 }
 
-// 固定操作列样式
+// 表格样式
 .el-table {
+  // 表头样式
+  ::v-deep .el-table__header th {
+    color: rgb(37, 37, 37);
+    font-weight: 500;
+    background-color: rgb(250, 250, 250);
+    padding: 16px 0;
+  }
+
+  // 表格单元格样式 - 增加内边距
+  ::v-deep .el-table__body td {
+    padding: 16px 0;
+  }
+
+  // 表头和单元格居中对齐
+  ::v-deep .el-table__header th,
+  ::v-deep .el-table__body td {
+    text-align: center;
+  }
+
+  // 操作列按钮样式
+  ::v-deep .el-button--text {
+    padding: 0 5px;
+    margin: 0 2px;
+    font-size: 14px;
+    color: rgb(106, 91, 140);
+
+    &:hover {
+      color: rgb(96, 81, 130);
+    }
+
+    // 图标颜色
+    i {
+      color: rgb(106, 91, 140);
+    }
+
+    &:hover i {
+      color: rgb(96, 81, 130);
+    }
+  }
+
+  // 固定操作列样式
   ::v-deep .el-table__fixed-right {
     box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+  }
+
+  // 固定列的表头也需要背景色
+  ::v-deep .el-table__fixed-right .el-table__header th {
+    background-color: rgb(250, 250, 250);
   }
 }
 </style>

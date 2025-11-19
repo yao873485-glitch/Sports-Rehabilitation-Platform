@@ -213,10 +213,31 @@ const routes = [
         meta: { title: '随访项目' }
       },
       {
+        path: 'project/add',
+        name: 'FollowupProjectAdd',
+        component: () => import('@/views/followup/project-add.vue'),
+        meta: { title: '新增项目' },
+        hidden: true
+      },
+      {
+        path: 'project/edit/:id',
+        name: 'FollowupProjectEdit',
+        component: () => import('@/views/followup/project-edit.vue'),
+        meta: { title: '编辑项目' },
+        hidden: true
+      },
+      {
         path: 'plan',
         name: 'FollowupPlan',
         component: () => import('@/views/followup/plan.vue'),
         meta: { title: '随访计划' }
+      },
+      {
+        path: 'plan/add',
+        name: 'FollowupPlanAdd',
+        component: () => import('@/views/followup/plan-add.vue'),
+        meta: { title: '新增计划' },
+        hidden: true
       },
       {
         path: 'list',
@@ -238,6 +259,20 @@ const routes = [
         meta: { title: '图文素材库' }
       },
       {
+        path: 'image-add',
+        name: 'ImageAdd',
+        component: () => import('@/views/education/image-add.vue'),
+        meta: { title: '新增图文内容' },
+        hidden: true
+      },
+      {
+        path: 'image-detail',
+        name: 'ImageDetail',
+        component: () => import('@/views/education/image-detail.vue'),
+        meta: { title: '图文详情' },
+        hidden: true
+      },
+      {
         path: 'video-library',
         name: 'VideoLibrary',
         component: () => import('@/views/education/video-library.vue'),
@@ -248,6 +283,13 @@ const routes = [
         name: 'VideoAdd',
         component: () => import('@/views/education/video-add.vue'),
         meta: { title: '新增视频' },
+        hidden: true
+      },
+      {
+        path: 'video-detail',
+        name: 'VideoDetail',
+        component: () => import('@/views/education/video-detail.vue'),
+        meta: { title: '视频详情' },
         hidden: true
       },
       {

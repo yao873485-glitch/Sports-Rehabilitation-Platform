@@ -9,7 +9,7 @@
             video_title AS videoTitle,
             video_id AS videoId,
             video_description AS videoDescription,
-            category_section AS categorySection,
+            module_category AS moduleCategory,
             view_count AS viewCount,
             like_count AS likeCount,
             author,
@@ -29,8 +29,8 @@
             <if test="queryDTO.author != null and queryDTO.author != ''">
                 AND author LIKE CONCAT('%', #{queryDTO.author}, '%')
             </if>
-            <if test="queryDTO.categorySection != null and queryDTO.categorySection != ''">
-                AND category_section = #{queryDTO.categorySection}
+            <if test="queryDTO.moduleCategory != null and queryDTO.moduleCategory != ''">
+                AND module_category = #{queryDTO.moduleCategory}
             </if>
             <if test="queryDTO.contentStatus != null and queryDTO.contentStatus != ''">
                 AND content_status = #{queryDTO.contentStatus}
@@ -43,15 +43,26 @@
     <select id="selectEduVideoById" resultType="com.rehabilitation.dto.EduVideoVO">
         SELECT
             id,
+            content_type AS contentType,
             video_title AS videoTitle,
             video_id AS videoId,
+            author,
+            author_type AS authorType,
+            publish_time AS publishTime,
+            support_game_mode AS supportGameMode,
+            is_original AS isOriginal,
             video_description AS videoDescription,
-            category_section AS categorySection,
+            cover_image AS coverImage,
+            video_source AS videoSource,
+            video_url AS videoUrl,
+            module_category AS moduleCategory,
+            like_count_base AS likeCountBase,
+            view_count_base AS viewCountBase,
             view_count AS viewCount,
             like_count AS likeCount,
-            author,
-            publish_time AS publishTime,
-            content_status AS contentStatus
+            content_status AS contentStatus,
+            created_at AS createdAt,
+            updated_at AS updatedAt
         FROM edu_video_asset
         WHERE id = #{id}
     </select>

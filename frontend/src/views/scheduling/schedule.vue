@@ -33,7 +33,7 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="el-icon-search" @click="handleQuery">立即查询</el-button>
+            <el-button class="custom-primary-btn" icon="el-icon-search" @click="handleQuery">立即查询</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -108,7 +108,7 @@
 
       <!-- 发布排班按钮 -->
       <div class="action-container">
-        <el-button type="primary" icon="el-icon-edit" @click="handlePublish">发布排班</el-button>
+        <el-button class="custom-primary-btn" icon="el-icon-edit" @click="handlePublish">发布排班</el-button>
       </div>
     </el-card>
 
@@ -709,7 +709,7 @@ export default {
 
     &:hover {
       background: #f5f7fa;
-      color: #409eff;
+      color: rgb(106, 91, 140);
     }
 
     &:first-child {
@@ -719,6 +719,25 @@ export default {
     &:last-child {
       border-radius: 0 0 4px 4px;
     }
+  }
+}
+
+// 自定义按钮样式
+.custom-primary-btn {
+  background-color: rgb(106, 91, 140);
+  border-color: rgb(106, 91, 140);
+  color: #fff;
+
+  &:hover,
+  &:focus {
+    background-color: rgb(96, 81, 130);
+    border-color: rgb(96, 81, 130);
+    color: #fff;
+  }
+
+  &:active {
+    background-color: rgb(86, 71, 120);
+    border-color: rgb(86, 71, 120);
   }
 }
 

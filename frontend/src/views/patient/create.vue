@@ -10,7 +10,7 @@
             :model="basicForm"
             :rules="basicRules"
             label-width="140px"
-            style="max-width: 700px; margin: 0 auto; padding: 20px 0;"
+            style="max-width: 700px; padding: 20px 0;"
           >
             <el-form-item label="客户姓名" prop="name">
               <el-input v-model="basicForm.name" placeholder="请输入客户姓名" :disabled="isReadonly" clearable />
@@ -188,8 +188,8 @@
             <!-- 操作按钮 -->
             <el-form-item>
               <div style="text-align: center; margin-top: 30px;">
-                <el-button @click="handleBackToList">返回列表</el-button>
-                <el-button v-if="!isReadonly" type="primary" @click="handleNextStep">下一步</el-button>
+                <el-button class="custom-primary-btn" @click="handleBackToList">返回列表</el-button>
+                <el-button v-if="!isReadonly" type="primary" class="custom-primary-btn" @click="handleNextStep">下一步</el-button>
               </div>
             </el-form-item>
           </el-form>
@@ -202,7 +202,7 @@
             :model="enrollmentForm"
             :rules="enrollmentRules"
             label-width="140px"
-            style="max-width: 700px; margin: 0 auto; padding: 20px 0;"
+            style="max-width: 700px; padding: 20px 0;"
           >
             <el-form-item label="入组编号（档案号）">
               <el-input
@@ -275,7 +275,7 @@
                 <el-button
                   type="primary"
                   size="small"
-                  style="background-color: #9b59d6; border-color: #9b59d6;"
+                  class="custom-primary-btn"
                   @click="handleFillHealthRecord"
                 >
                   {{ isReadonly ? '查看' : '填写' }}
@@ -309,8 +309,8 @@
             <el-form-item>
               <div style="text-align: center; margin-top: 30px;">
                 <el-button v-if="!isReadonly" @click="handlePrevStep">上一步</el-button>
-                <el-button v-if="!isReadonly" type="primary" :loading="submitLoading" @click="handleSubmit">保存</el-button>
-                <el-button @click="handleBackToList">返回列表</el-button>
+                <el-button v-if="!isReadonly" type="primary" class="custom-primary-btn" :loading="submitLoading" @click="handleSubmit">保存</el-button>
+                <el-button class="custom-primary-btn" @click="handleBackToList">返回列表</el-button>
               </div>
             </el-form-item>
           </el-form>
@@ -464,6 +464,51 @@ export default {
     }
   },
   methods: {
+    /**
+     * 解析省市区字符串为数组
+     * 例如："河北省秦皇岛市北戴河区" -> ["河北省", "秦皇岛市", "北戴河区"]
+     */
+    parseRegionString(regionStr) {
+      if (!regionStr) return []
+
+      const result = []
+      let remaining = regionStr.trim()
+
+      // 匹配省级单位（省/自治区/直辖市）
+      // 处理直辖市特殊情况：北京市、上海市、天津市、重庆市
+      const directMunicipalities = ['北京市', '上海市', '天津市', '重庆市']
+      const isDirectMunicipality = directMunicipalities.some(city => remaining.startsWith(city))
+
+      if (isDirectMunicipality) {
+        // 直辖市：第一级和第二级都是市
+        const cityName = remaining.substring(0, 3) // "北京市"
+        result.push(cityName)
+        result.push(cityName) // 直辖市的省级和市级都用同一个名称
+        remaining = remaining.substring(3)
+      } else {
+        // 普通省份
+        const provinceMatch = remaining.match(/^(.+?(?:省|自治区))/)
+        if (provinceMatch) {
+          result.push(provinceMatch[1])
+          remaining = remaining.substring(provinceMatch[1].length)
+
+          // 匹配市级单位
+          const cityMatch = remaining.match(/^(.+?(?:市|地区|州|盟))/)
+          if (cityMatch) {
+            result.push(cityMatch[1])
+            remaining = remaining.substring(cityMatch[1].length)
+          }
+        }
+      }
+
+      // 剩余部分作为区/县级单位
+      if (remaining && remaining.trim()) {
+        result.push(remaining.trim())
+      }
+
+      return result.length >= 2 ? result : []
+    },
+
     /** 加载患者数据 */
     async loadPatientData() {
       try {
@@ -493,16 +538,31 @@ export default {
           this.basicForm.ethnicity = detailInfo.ethnicity || ''
           this.basicForm.occupation = detailInfo.occupation || ''
 
-          // 处理联系地址：如果有值，尝试解析为数组
+          // 处理联系地址：将字符串解析为数组格式以适配级联选择器
           if (detailInfo.contactProvinceCityDistrict) {
-            // 这里简化处理，直接设置字符串，实际应该解析成数组
-            this.basicForm.contactAddress = detailInfo.contactProvinceCityDistrict.split('')
+            const parsedRegion = this.parseRegionString(detailInfo.contactProvinceCityDistrict)
+            if (parsedRegion.length > 0) {
+              this.basicForm.contactAddress = parsedRegion
+            } else {
+              // 解析失败时，保留原字符串供用户重新选择
+              this.basicForm.contactAddress = []
+              console.warn('无法解析联系地址:', detailInfo.contactProvinceCityDistrict)
+            }
           }
 
+          // 填充详细地址
+          this.basicForm.detailAddress = detailInfo.detailAddress || ''
+
+          // 填充备注说明
           this.basicForm.remarks = detailInfo.remark || ''
         }
 
-        this.$message.success('患者信息加载成功，请补充或编辑信息')
+        // 编辑模式下，允许切换到入组信息页
+        if (this.isEditMode) {
+          this.basicFormCompleted = true
+        }
+
+        this.$message.success('患者信息加载成功')
       } catch (error) {
         console.error('加载患者信息失败:', error)
         this.$message.error('加载患者信息失败')
@@ -614,6 +674,12 @@ export default {
         patientData.contactAddress = patientData.contactAddress.join('')
       }
 
+      // 确保detailAddress字段被包含
+      patientData.detailAddress = this.basicForm.detailAddress || ''
+
+      // 确保remarks字段被包含
+      patientData.remarks = this.basicForm.remarks || ''
+
       console.log('提交的患者数据:', patientData)
 
       // 调用后端API保存患者信息
@@ -632,13 +698,20 @@ export default {
             medicalRecordNo: savedPatientInfo.medicalRecordNo || patientData.medicalRecordNo
           }
 
-          // 跳转到患者管理方案配置页面
-          this.$router.push({
-            path: '/scheme/config-patient',
-            query: {
-              patientData: JSON.stringify(fullPatientData)
-            }
-          })
+          // 判断来源，决定跳转目标
+          const from = this.$route.query.from
+          if (from === 'scheme') {
+            // 从方案管理来的，跳转到方案配置页面
+            this.$router.push({
+              path: '/scheme/config-patient',
+              query: {
+                patientData: JSON.stringify(fullPatientData)
+              }
+            })
+          } else {
+            // 默认情况（快速建档），返回档案列表
+            this.$router.push({ path: '/archive/list' })
+          }
         })
         .catch(error => {
           console.error('保存患者信息失败:', error)
@@ -661,7 +734,8 @@ export default {
           contactProvinceCityDistrict: Array.isArray(this.basicForm.contactAddress)
             ? this.basicForm.contactAddress.join('')
             : this.basicForm.contactAddress,
-          remark: this.basicForm.remarks
+          detailAddress: this.basicForm.detailAddress || '',
+          remark: this.basicForm.remarks || ''
         }
 
         await savePatientDetail(detailData)
@@ -816,6 +890,63 @@ export default {
 
   ::v-deep .el-card {
     min-height: 600px;
+  }
+
+  // 自定义主要按钮颜色
+  .custom-primary-btn {
+    background-color: rgb(106, 91, 140);
+    border-color: rgb(106, 91, 140);
+    color: #fff;
+
+    &:hover,
+    &:focus {
+      background-color: rgb(96, 81, 130);
+      border-color: rgb(96, 81, 130);
+      color: #fff;
+    }
+
+    &:active {
+      background-color: rgb(86, 71, 120);
+      border-color: rgb(86, 71, 120);
+    }
+  }
+
+  .el-button--primary {
+    background-color: rgb(106, 91, 140) !important;
+    border-color: rgb(106, 91, 140) !important;
+    color: #fff !important;
+
+    &:hover,
+    &:focus {
+      background-color: rgb(96, 81, 130) !important;
+      border-color: rgb(96, 81, 130) !important;
+      color: #fff !important;
+    }
+
+    &:active {
+      background-color: rgb(86, 71, 120) !important;
+      border-color: rgb(86, 71, 120) !important;
+      color: #fff !important;
+    }
+  }
+
+  ::v-deep .el-button--primary {
+    background-color: rgb(106, 91, 140) !important;
+    border-color: rgb(106, 91, 140) !important;
+    color: #fff !important;
+
+    &:hover,
+    &:focus {
+      background-color: rgb(96, 81, 130) !important;
+      border-color: rgb(96, 81, 130) !important;
+      color: #fff !important;
+    }
+
+    &:active {
+      background-color: rgb(86, 71, 120) !important;
+      border-color: rgb(86, 71, 120) !important;
+      color: #fff !important;
+    }
   }
 }
 

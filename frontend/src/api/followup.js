@@ -27,6 +27,41 @@ export function removeFromProject(id) {
 
 // ==================== 随访项目相关接口 ====================
 
+// 保存随访项目配置
+export function saveFollowupProject(data) {
+  return request({
+    url: '/api/followup-project-config',
+    method: 'post',
+    data
+  })
+}
+
+// 分页获取随访项目配置列表
+export function getFollowupProjectConfigList(params) {
+  return request({
+    url: '/api/followup-project-config/page',
+    method: 'get',
+    params
+  })
+}
+
+// 获取随访项目配置详情
+export function getFollowupProjectConfigDetail(id) {
+  return request({
+    url: `/api/followup-project-config/${id}`,
+    method: 'get'
+  })
+}
+
+// 更新随访项目配置
+export function updateFollowupProjectConfig(data) {
+  return request({
+    url: '/api/followup-project-config',
+    method: 'put',
+    data
+  })
+}
+
 // 分页获取随访项目列表
 export function getFollowupProjectList(params) {
   return request({
@@ -101,6 +136,15 @@ export function deleteFollowupPlan(id) {
 export function createFollowupPlan(data) {
   return request({
     url: '/api/followup-plan/create',
+    method: 'post',
+    data
+  })
+}
+
+// 保存随访计划（草稿或发布）
+export function saveFollowupPlan(data) {
+  return request({
+    url: '/api/followup-plan',
     method: 'post',
     data
   })

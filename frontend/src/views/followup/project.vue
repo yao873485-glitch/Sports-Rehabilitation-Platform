@@ -52,14 +52,19 @@
 
       <!-- 操作按钮区域 -->
       <div class="toolbar">
-        <el-button
-          type="primary"
-          @click="handleAdd"
-          icon="el-icon-plus"
-          size="small"
-        >
-          新增项目
-        </el-button>
+        <div class="toolbar-right">
+          <el-button
+            type="primary"
+            @click="handleAdd"
+            icon="el-icon-circle-plus-outline"
+          >
+            新增
+          </el-button>
+          <el-button icon="el-icon-refresh" circle size="small" @click="getList" title="刷新" />
+          <el-button icon="el-icon-s-operation" circle size="small" title="列设置" />
+          <el-button icon="el-icon-setting" circle size="small" title="设置" />
+          <el-button icon="el-icon-full-screen" circle size="small" title="全屏" />
+        </div>
       </div>
 
       <!-- 项目列表 -->
@@ -161,44 +166,11 @@
         <el-button @click="detailDialogVisible = false">关闭</el-button>
       </div>
     </el-dialog>
-
-    <!-- 编辑对话框 -->
-    <el-dialog title="编辑项目" :visible.sync="editDialogVisible" width="60%">
-      <el-form :model="editForm" :rules="editRules" ref="editForm" label-width="100px">
-        <el-form-item label="项目名称" prop="projectName">
-          <el-input v-model="editForm.projectName" placeholder="请输入项目名称" />
-        </el-form-item>
-        <el-form-item label="项目介绍" prop="projectDescription">
-          <el-input
-            type="textarea"
-            v-model="editForm.projectDescription"
-            :rows="4"
-            placeholder="请输入项目介绍"
-          />
-        </el-form-item>
-        <el-form-item label="绑定随访计划" prop="linkedFollowupPlan">
-          <el-input v-model="editForm.linkedFollowupPlan" placeholder="请输入绑定的随访计划" />
-        </el-form-item>
-        <el-form-item label="是否发布" prop="isPublished">
-          <el-switch
-            v-model="editForm.isPublished"
-            :active-value="1"
-            :inactive-value="0"
-            active-text="已发布"
-            inactive-text="未发布"
-          />
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveEdit">保存</el-button>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getFollowupProjectList, updateFollowupProject } from '@/api/followup'
+import { getFollowupProjectConfigList } from '@/api/followup'
 
 export default {
   name: 'FollowupProject',
@@ -221,29 +193,8 @@ export default {
       },
       // 对话框显示状态
       detailDialogVisible: false,
-      editDialogVisible: false,
       // 当前操作的项目
-      currentProject: null,
-      // 编辑表单
-      editForm: {
-        projectName: '',
-        projectDescription: '',
-        linkedFollowupPlan: '',
-        isPublished: 0
-      },
-      editRules: {
-        projectName: [
-          { required: true, message: '请输入项目名称', trigger: 'blur' },
-          { max: 255, message: '项目名称不能超过255个字符', trigger: 'blur' }
-        ],
-        linkedFollowupPlan: [
-          { required: true, message: '请输入绑定的随访计划', trigger: 'blur' },
-          { max: 255, message: '随访计划不能超过255个字符', trigger: 'blur' }
-        ],
-        projectDescription: [
-          { max: 1000, message: '项目介绍不能超过1000个字符', trigger: 'blur' }
-        ]
-      }
+      currentProject: null
     }
   },
   created() {
@@ -262,9 +213,28 @@ export default {
           startDate: this.searchForm.dateRange ? this.searchForm.dateRange[0] : null,
           endDate: this.searchForm.dateRange ? this.searchForm.dateRange[1] : null
         }
-        const response = await getFollowupProjectList(params)
-        this.tableData = response.data.records
-        this.pagination.total = response.data.total
+
+        // 使用新的项目配置API
+        const response = await getFollowupProjectConfigList(params)
+
+        // 后端返回 Result.success(page)
+        // 拦截器返回整个 res 对象: { code: 200, message: "...", data: page }
+        // page 对象包含 records 和 total 字段
+        const pageData = response.data || { records: [], total: 0 }
+
+        // 转换数据格式以匹配表格显示
+        this.tableData = (pageData.records || []).map(item => ({
+          id: item.id,
+          projectCode: item.projectCode || item.project_code,
+          projectName: item.projectName || item.project_name,
+          projectDescription: item.projectDescription || item.project_description,
+          linkedFollowupPlan: item.bindPlan || item.bind_plan || '-',
+          lastModifiedTime: item.updatedTime || item.updated_time,
+          createdTime: item.createdTime || item.created_time,
+          operator: item.operator,
+          isPublished: item.isPublished !== undefined ? item.isPublished : item.is_published
+        }))
+        this.pagination.total = pageData.total || 0
       } catch (error) {
         this.$message.error('获取数据失败')
         console.error('获取数据失败:', error)
@@ -283,9 +253,13 @@ export default {
       this.pagination.currentPage = 1
       this.fetchData()
     },
+    // 刷新列表
+    getList() {
+      this.fetchData()
+    },
     // 新增项目
     handleAdd() {
-      this.$message.info('新增项目功能开发中')
+      this.$router.push('/followup/project/add')
     },
     // 查看详情
     handleViewDetail(row) {
@@ -294,33 +268,7 @@ export default {
     },
     // 编辑
     handleEdit(row) {
-      this.currentProject = { ...row }
-      this.editForm = {
-        projectName: row.projectName,
-        projectDescription: row.projectDescription,
-        linkedFollowupPlan: row.linkedFollowupPlan,
-        isPublished: row.isPublished
-      }
-      this.editDialogVisible = true
-    },
-    // 保存编辑
-    async handleSaveEdit() {
-      try {
-        await this.$refs.editForm.validate()
-        const updateData = {
-          ...this.editForm,
-          id: this.currentProject.id
-        }
-        await updateFollowupProject(updateData)
-        this.$message.success('保存成功')
-        this.editDialogVisible = false
-        this.fetchData()
-      } catch (error) {
-        if (error !== false) {
-          this.$message.error('保存失败')
-          console.error('保存失败:', error)
-        }
-      }
+      this.$router.push(`/followup/project/edit/${row.id}`)
     },
     // 分页大小改变
     handleSizeChange(val) {
@@ -357,6 +305,29 @@ export default {
     margin-bottom: 20px;
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .el-button.el-button--primary {
+        color: #fff;
+        border-color: #409eff;
+        background-color: #409eff;
+      }
+
+      .el-button.is-circle {
+        color: #606266;
+        border-color: #dcdfe6;
+
+        &:hover {
+          color: #409eff;
+          border-color: #409eff;
+        }
+      }
+    }
   }
 
   .pagination-container {

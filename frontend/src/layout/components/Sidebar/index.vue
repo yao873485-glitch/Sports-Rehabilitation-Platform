@@ -53,7 +53,7 @@ export default {
 <style lang="scss" scoped>
 .sidebar-container {
   background-color: rgb(0, 21, 41);
-  width: 210px !important;
+  width: 280px !important;
   height: 100vh;
   position: fixed;
   top: 0;
@@ -103,6 +103,22 @@ export default {
     border: none;
     height: 100%;
     width: 100% !important;
+    font-family: 'SimHei', '黑体', 'Microsoft YaHei', sans-serif;
+    font-size: 21px;
+  }
+
+  // 确保所有菜单项都使用黑体和增大的字体
+  ::v-deep .el-menu-item,
+  ::v-deep .el-submenu__title {
+    font-family: 'SimHei', '黑体', 'Microsoft YaHei', sans-serif !important;
+    font-size: 21px !important;
+    line-height: 56px;
+  }
+
+  // 调整图标大小以匹配字体
+  ::v-deep .el-menu-item i,
+  ::v-deep .el-submenu__title i {
+    font-size: 21px;
   }
 }
 </style>

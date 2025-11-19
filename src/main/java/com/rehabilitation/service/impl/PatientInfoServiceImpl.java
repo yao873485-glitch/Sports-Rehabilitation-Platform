@@ -130,7 +130,19 @@ public class PatientInfoServiceImpl implements PatientInfoService {
         patientInfo.setPhone(patientCreateDTO.getPhone());
         patientInfo.setDiseaseType(patientCreateDTO.getDiseaseType());
         patientInfo.setEnrollmentInstitution(patientCreateDTO.getEnrollmentInstitution());
-        patientInfo.setAddress(patientCreateDTO.getAddress());
+
+        // 重要修复：patient.address 应该使用 detailAddress 字段，用于列表页展示
+        // 将"联系地址（省市区）+ 详细地址"组合作为完整地址
+        StringBuilder fullAddress = new StringBuilder();
+        if (patientCreateDTO.getContactAddress() != null && !patientCreateDTO.getContactAddress().trim().isEmpty()) {
+            fullAddress.append(patientCreateDTO.getContactAddress());
+        }
+        if (patientCreateDTO.getDetailAddress() != null && !patientCreateDTO.getDetailAddress().trim().isEmpty()) {
+            fullAddress.append(patientCreateDTO.getDetailAddress());
+        }
+        if (fullAddress.length() > 0) {
+            patientInfo.setAddress(fullAddress.toString());
+        }
 
         // 自动生成唯一档案号
         patientInfo.setMedicalRecordNo(generateUniqueRecordNumber());
@@ -159,19 +171,14 @@ public class PatientInfoServiceImpl implements PatientInfoService {
             patientDetail.setContactProvinceCityDistrict(patientCreateDTO.getContactAddress());
         }
 
-        // 组装备注信息
-        StringBuilder remark = new StringBuilder();
+        // 设置详细地址（门牌号等）
         if (patientCreateDTO.getDetailAddress() != null && !patientCreateDTO.getDetailAddress().trim().isEmpty()) {
-            remark.append("详细地址：").append(patientCreateDTO.getDetailAddress()).append("; ");
+            patientDetail.setDetailAddress(patientCreateDTO.getDetailAddress());
         }
-        if (patientCreateDTO.getDiagnosis() != null && !patientCreateDTO.getDiagnosis().trim().isEmpty()) {
-            remark.append("诊断：").append(patientCreateDTO.getDiagnosis()).append("; ");
-        }
+
+        // 设置备注信息（只保存remarks字段，不混入其他信息）
         if (patientCreateDTO.getRemarks() != null && !patientCreateDTO.getRemarks().trim().isEmpty()) {
-            remark.append(patientCreateDTO.getRemarks());
-        }
-        if (remark.length() > 0) {
-            patientDetail.setRemark(remark.toString());
+            patientDetail.setRemark(patientCreateDTO.getRemarks());
         }
 
         patientDetailMapper.insert(patientDetail);

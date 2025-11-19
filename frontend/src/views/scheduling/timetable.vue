@@ -35,7 +35,7 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="el-icon-search" @click="handleQuery">立即查询</el-button>
+            <el-button class="custom-primary-btn" icon="el-icon-search" @click="handleQuery">立即查询</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -411,6 +411,25 @@ export default {
       color: #c0c4cc;
       font-size: 14px;
     }
+  }
+}
+
+// 自定义按钮样式
+.custom-primary-btn {
+  background-color: rgb(106, 91, 140);
+  border-color: rgb(106, 91, 140);
+  color: #fff;
+
+  &:hover,
+  &:focus {
+    background-color: rgb(96, 81, 130);
+    border-color: rgb(96, 81, 130);
+    color: #fff;
+  }
+
+  &:active {
+    background-color: rgb(86, 71, 120);
+    border-color: rgb(86, 71, 120);
   }
 }
 </style>

@@ -76,14 +76,20 @@
 
       <!-- 操作按钮区域 -->
       <div class="toolbar">
-        <el-button
-          type="primary"
-          @click="handleAdd"
-          icon="el-icon-plus"
-          size="small"
-        >
-          添加内容
-        </el-button>
+        <div class="toolbar-right">
+          <el-button
+            type="primary"
+            @click="handleAdd"
+            icon="el-icon-plus"
+            size="small"
+          >
+            添加内容
+          </el-button>
+          <el-button icon="el-icon-refresh" circle size="small" @click="fetchData" title="刷新" />
+          <el-button icon="el-icon-s-operation" circle size="small" title="列设置" />
+          <el-button icon="el-icon-setting" circle size="small" title="设置" />
+          <el-button icon="el-icon-full-screen" circle size="small" @click="handleFullScreen" title="全屏" />
+        </div>
       </div>
 
       <!-- 图文素材列表 -->
@@ -123,6 +129,7 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="articleLink" label="文章链接" min-width="150" show-overflow-tooltip />
         <el-table-column label="操作" width="240" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
@@ -182,32 +189,6 @@
       </div>
     </el-card>
 
-    <!-- 详情对话框 -->
-    <el-dialog title="图文素材详情" :visible.sync="detailDialogVisible" width="70%">
-      <div v-if="currentContent" class="content-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="内容标题" :span="2">{{ currentContent.contentTitle }}</el-descriptions-item>
-          <el-descriptions-item label="内容ID">{{ currentContent.contentId }}</el-descriptions-item>
-          <el-descriptions-item label="所属板块">{{ currentContent.categorySection }}</el-descriptions-item>
-          <el-descriptions-item label="作者">{{ currentContent.author }}</el-descriptions-item>
-          <el-descriptions-item label="内容状态">
-            <el-tag :type="getStatusType(currentContent.contentStatus)">
-              {{ currentContent.contentStatus }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="阅读量">{{ formatNumber(currentContent.viewCount) }}</el-descriptions-item>
-          <el-descriptions-item label="点赞量">{{ formatNumber(currentContent.likeCount) }}</el-descriptions-item>
-          <el-descriptions-item label="发布时间">{{ formatDateTime(currentContent.publishTime) }}</el-descriptions-item>
-          <el-descriptions-item label="文章描述" :span="2">
-            <div class="description-content">{{ currentContent.articleDescription || '暂无描述' }}</div>
-          </el-descriptions-item>
-        </el-descriptions>
-      </div>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-      </div>
-    </el-dialog>
-
     <!-- 预览对话框 -->
     <el-dialog title="内容预览" :visible.sync="previewDialogVisible" width="80%">
       <div v-if="currentContent" class="content-preview">
@@ -231,212 +212,11 @@
         <el-button @click="previewDialogVisible = false">关闭</el-button>
       </div>
     </el-dialog>
-
-    <!-- 添加/编辑内容对话框 -->
-    <el-dialog
-      :title="dialogTitle"
-      :visible.sync="addDialogVisible"
-      width="900px"
-      :close-on-click-modal="false"
-      @close="handleDialogClose"
-    >
-      <el-form
-        :model="contentForm"
-        :rules="formRules"
-        ref="contentForm"
-        label-width="120px"
-        size="small"
-      >
-        <el-form-item label="内容类型" prop="contentType" required>
-          <el-select v-model="contentForm.contentType" placeholder="请选择内容类型" style="width: 200px;">
-            <el-option label="文章" value="文章" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="文章标题" prop="contentTitle" required>
-          <el-input
-            v-model="contentForm.contentTitle"
-            placeholder="请输入标题，限50个字符"
-            maxlength="50"
-            show-word-limit
-            style="width: 100%;"
-          />
-          <div class="char-count">{{ contentForm.contentTitle.length }}/50</div>
-        </el-form-item>
-
-        <el-form-item label="作者" prop="author">
-          <el-input
-            v-model="contentForm.author"
-            placeholder="请输入作者"
-            style="width: 200px;"
-          />
-          <el-select
-            v-model="contentForm.authorType"
-            placeholder="请选择"
-            style="width: 150px; margin-left: 10px;"
-          >
-            <el-option label="平台运营" value="平台运营" />
-          </el-select>
-          <el-button type="text" style="margin-left: 10px;">选择</el-button>
-        </el-form-item>
-
-        <el-form-item label="文章标签" prop="tags">
-          <el-input
-            v-model="contentForm.tags"
-            placeholder="请输入标签"
-            style="width: 300px;"
-          />
-          <el-button type="text" style="margin-left: 10px;">选择</el-button>
-        </el-form-item>
-
-        <el-form-item label="所属板块" prop="categorySection" required>
-          <el-select
-            v-model="contentForm.categorySection"
-            placeholder="请选择所属板块"
-            style="width: 200px;"
-          >
-            <el-option label="医教" value="医教" />
-            <el-option label="科普" value="科普" />
-            <el-option label="康复指导" value="康复指导" />
-            <el-option label="健康资讯" value="健康资讯" />
-            <el-option label="疾病预防" value="疾病预防" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="发布时间" prop="publishTime">
-          <el-date-picker
-            v-model="contentForm.publishTime"
-            type="datetime"
-            placeholder="选择日期时间"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            style="width: 300px;"
-          />
-        </el-form-item>
-
-        <el-form-item label="是否支持游戏模式" prop="supportGameMode">
-          <el-radio-group v-model="contentForm.supportGameMode">
-            <el-radio :label="1">支持</el-radio>
-            <el-radio :label="0">不支持</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="是否原创" prop="isOriginal">
-          <el-radio-group v-model="contentForm.isOriginal">
-            <el-radio :label="1">是</el-radio>
-            <el-radio :label="0">否</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="文章描述" prop="articleDescription">
-          <el-input
-            v-model="contentForm.articleDescription"
-            type="textarea"
-            placeholder="请输入描述，用于文章摘要示"
-            :rows="4"
-            maxlength="300"
-            show-word-limit
-            style="width: 100%;"
-          />
-          <div class="char-count">{{ contentForm.articleDescription.length }}/300</div>
-        </el-form-item>
-
-        <el-form-item label="封面图" prop="coverImage">
-          <div class="upload-container">
-            <el-upload
-              class="cover-uploader"
-              action="/api/upload"
-              :show-file-list="false"
-              :on-success="handleCoverUploadSuccess"
-              :before-upload="beforeCoverUpload"
-              accept="image/*"
-            >
-              <div class="upload-box" v-if="!contentForm.coverImage">
-                <i class="el-icon-plus"></i>
-              </div>
-              <img v-else :src="contentForm.coverImage" class="cover-image" />
-            </el-upload>
-            <div class="upload-tips">
-              当前图片仅允许上传文件类型，最大3张图片，图片不超过370*225
-            </div>
-          </div>
-        </el-form-item>
-
-        <el-form-item label="文章来源" prop="contentSource">
-          <el-radio-group v-model="contentForm.contentSource">
-            <el-radio label="系统录入">系统录入</el-radio>
-            <el-radio label="外链">外链</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="文章内容" prop="articleContent" v-if="contentForm.contentSource === '系统录入'">
-          <div class="editor-container">
-            <div class="editor-toolbar">
-              <el-button-group>
-                <el-button size="mini" icon="el-icon-picture">插入图片</el-button>
-                <el-button size="mini" icon="el-icon-link">插入链接</el-button>
-              </el-button-group>
-              <select class="paragraph-select">
-                <option value="Paragraph">Paragraph</option>
-              </select>
-            </div>
-            <el-input
-              v-model="contentForm.articleContent"
-              type="textarea"
-              placeholder="请输入文章内容"
-              :rows="10"
-              style="width: 100%;"
-            />
-          </div>
-        </el-form-item>
-
-        <el-form-item label="外链地址" prop="externalLink" v-if="contentForm.contentSource === '外链'">
-          <el-input
-            v-model="contentForm.externalLink"
-            placeholder="请输入外链地址"
-            style="width: 100%;"
-          />
-        </el-form-item>
-
-        <el-form-item label="所属模块" prop="moduleCategory">
-          <el-radio-group v-model="contentForm.moduleCategory">
-            <el-radio label="医教">医教</el-radio>
-            <el-radio label="直数">直数</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="点赞基数">
-          <el-input
-            v-model.number="contentForm.likeCountBase"
-            placeholder="0"
-            type="number"
-            style="width: 150px;"
-          >
-            <template slot="append">人</template>
-          </el-input>
-        </el-form-item>
-
-        <el-form-item label="阅读基数">
-          <el-input
-            v-model.number="contentForm.viewCountBase"
-            placeholder="0"
-            type="number"
-            style="width: 150px;"
-          >
-            <template slot="append">人</template>
-          </el-input>
-        </el-form-item>
-      </el-form>
-
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="addDialogVisible = false">返回</el-button>
-        <el-button type="primary" @click="handleSubmit">返回并保存</el-button>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getContentList, getContentDetail, addContent, updateContent } from '@/api/education'
+import { getContentList } from '@/api/education'
 
 export default {
   name: 'ImageLibrary',
@@ -460,54 +240,9 @@ export default {
         total: 0
       },
       // 对话框显示状态
-      detailDialogVisible: false,
       previewDialogVisible: false,
-      addDialogVisible: false,
       // 当前操作的内容
-      currentContent: null,
-      // 添加/编辑表单
-      contentForm: {
-        contentType: '文章',
-        contentTitle: '',
-        author: '系统管理员',
-        authorType: '平台运营',
-        tags: '',
-        publishTime: null,
-        supportGameMode: 1,
-        isOriginal: 1,
-        articleDescription: '',
-        coverImage: '',
-        contentSource: '系统录入',
-        articleContent: '',
-        externalLink: '',
-        moduleCategory: '医教',
-        likeCountBase: 0,
-        viewCountBase: 0,
-        categorySection: '医教'
-      },
-      // 表单验证规则
-      formRules: {
-        contentType: [
-          { required: true, message: '请选择内容类型', trigger: 'change' }
-        ],
-        contentTitle: [
-          { required: true, message: '请输入文章标题', trigger: 'blur' },
-          { max: 50, message: '标题长度不能超过50个字符', trigger: 'blur' }
-        ],
-        categorySection: [
-          { required: true, message: '请选择所属板块', trigger: 'change' }
-        ],
-        author: [
-          { required: true, message: '请输入作者', trigger: 'blur' }
-        ],
-        articleDescription: [
-          { max: 300, message: '描述长度不能超过300个字符', trigger: 'blur' }
-        ]
-      },
-      // 对话框标题
-      dialogTitle: '添加内容',
-      // 是否编辑模式
-      isEdit: false
+      currentContent: null
     }
   },
   created() {
@@ -551,42 +286,27 @@ export default {
     },
     // 添加内容
     handleAdd() {
-      this.dialogTitle = '新增内容'
-      this.isEdit = false
-      this.resetForm()
-      this.addDialogVisible = true
+      this.$router.push('/education/image-add')
     },
     // 编辑
     handleEdit(row) {
-      this.dialogTitle = '编辑内容'
-      this.isEdit = true
-      this.currentContent = { ...row }
-      // 填充表单数据
-      this.contentForm = {
-        id: row.id,
-        contentType: row.contentType || '文章',
-        contentTitle: row.contentTitle || '',
-        author: row.author || '',
-        authorType: row.authorType || '',
-        tags: row.tags || '',
-        publishTime: row.publishTime || null,
-        supportGameMode: row.supportGameMode !== undefined ? row.supportGameMode : 1,
-        isOriginal: row.isOriginal !== undefined ? row.isOriginal : 1,
-        articleDescription: row.articleDescription || '',
-        coverImage: row.coverImage || '',
-        contentSource: row.contentSource || '系统录入',
-        articleContent: row.articleContent || '',
-        externalLink: row.externalLink || '',
-        moduleCategory: row.moduleCategory || '',
-        likeCountBase: row.likeCountBase || 0,
-        viewCountBase: row.viewCountBase || 0,
-        categorySection: row.categorySection || ''
-      }
-      this.addDialogVisible = true
+      this.$router.push({
+        path: '/education/image-add',
+        query: {
+          id: row.id,
+          mode: 'edit'
+        }
+      })
     },
     // 复制
     handleCopy(row) {
-      this.$message.info('复制功能开发中')
+      this.$router.push({
+        path: '/education/image-add',
+        query: {
+          id: row.id,
+          mode: 'copy'
+        }
+      })
     },
     // 预览
     handlePreview(row) {
@@ -594,15 +314,13 @@ export default {
       this.previewDialogVisible = true
     },
     // 详情
-    async handleDetail(row) {
-      try {
-        const response = await getContentDetail(row.id)
-        this.currentContent = response.data
-        this.detailDialogVisible = true
-      } catch (error) {
-        this.$message.error('获取详情失败')
-        console.error('获取详情失败:', error)
-      }
+    handleDetail(row) {
+      this.$router.push({
+        path: '/education/image-detail',
+        query: {
+          id: row.id
+        }
+      })
     },
     // 分页大小改变
     handleSizeChange(val) {
@@ -636,84 +354,14 @@ export default {
       if (!num) return '0'
       return num.toString()
     },
-    // 重置表单
-    resetForm() {
-      this.contentForm = {
-        contentType: '文章',
-        contentTitle: '',
-        author: '系统管理员',
-        authorType: '平台运营',
-        tags: '',
-        publishTime: null,
-        supportGameMode: 1,
-        isOriginal: 1,
-        articleDescription: '',
-        coverImage: '',
-        contentSource: '系统录入',
-        articleContent: '',
-        externalLink: '',
-        moduleCategory: '医教',
-        likeCountBase: 0,
-        viewCountBase: 0,
-        categorySection: '医教'
-      }
-      if (this.$refs.contentForm) {
-        this.$refs.contentForm.resetFields()
-      }
-    },
-    // 关闭对话框
-    handleDialogClose() {
-      this.resetForm()
-    },
-    // 封面图上传成功
-    handleCoverUploadSuccess(response) {
-      if (response.code === 200) {
-        this.contentForm.coverImage = response.data.url
-        this.$message.success('上传成功')
+    // 全屏显示
+    handleFullScreen() {
+      const element = document.documentElement
+      if (document.fullscreenElement) {
+        document.exitFullscreen()
       } else {
-        this.$message.error(response.message || '上传失败')
+        element.requestFullscreen()
       }
-    },
-    // 封面图上传前验证
-    beforeCoverUpload(file) {
-      const isImage = file.type.startsWith('image/')
-      const isLt2M = file.size / 1024 / 1024 < 2
-
-      if (!isImage) {
-        this.$message.error('只能上传图片文件!')
-        return false
-      }
-      if (!isLt2M) {
-        this.$message.error('图片大小不能超过 2MB!')
-        return false
-      }
-      return true
-    },
-    // 提交表单
-    handleSubmit() {
-      this.$refs.contentForm.validate(async (valid) => {
-        if (valid) {
-          try {
-            if (this.isEdit) {
-              // 编辑模式
-              await updateContent(this.contentForm)
-              this.$message.success('修改成功')
-            } else {
-              // 新增模式
-              await addContent(this.contentForm)
-              this.$message.success('添加成功')
-            }
-            this.addDialogVisible = false
-            this.fetchData()
-          } catch (error) {
-            this.$message.error(this.isEdit ? '修改失败' : '添加失败')
-            console.error('提交失败:', error)
-          }
-        } else {
-          this.$message.warning('请填写必填项')
-          return false
-        }
-      })
     }
   }
 }
@@ -734,6 +382,25 @@ export default {
     margin-bottom: 20px;
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+
+      .el-button.is-circle {
+        padding: 8px;
+        border-color: #dcdfe6;
+        color: #606266;
+
+        &:hover {
+          color: #409eff;
+          border-color: #c6e2ff;
+          background-color: #ecf5ff;
+        }
+      }
+    }
   }
 
   .pagination-container {
@@ -744,16 +411,6 @@ export default {
       margin-right: 20px;
       color: #606266;
       font-size: 14px;
-    }
-  }
-
-  .content-detail {
-    padding: 20px 0;
-
-    .description-content {
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-word;
     }
   }
 

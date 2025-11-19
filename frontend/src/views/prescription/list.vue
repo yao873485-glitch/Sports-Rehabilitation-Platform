@@ -1,81 +1,93 @@
 <template>
   <div class="app-container">
-    <!-- 新增按钮 -->
-    <div class="button-container">
-      <el-button type="primary" icon="el-icon-plus" @click="handleAdd">新增</el-button>
-    </div>
-
     <!-- 筛选区域 -->
     <div class="filter-container">
-      <div class="filter-item">
-        <el-select v-model="queryParams.diseaseType" placeholder="病种类型" clearable style="width: 150px;">
-          <el-option label="全部" value="" />
-          <el-option
-            v-for="type in diseaseTypes"
-            :key="type"
-            :label="type"
-            :value="type"
+      <!-- 第一排 -->
+      <div class="filter-row">
+        <div class="filter-item">
+          <label>病种类型：</label>
+          <el-select v-model="queryParams.diseaseType" placeholder="全部" clearable style="width: 150px;">
+            <el-option label="全部" value="" />
+            <el-option
+              v-for="type in diseaseTypes"
+              :key="type"
+              :label="type"
+              :value="type"
+            />
+          </el-select>
+        </div>
+
+        <div class="filter-item">
+          <label>搜索：</label>
+          <el-input
+            v-model="queryParams.searchKeyword"
+            placeholder="请输入患者姓名/电话/档案号"
+            style="width: 240px;"
+            clearable
           />
-        </el-select>
+        </div>
+
+        <div class="filter-item">
+          <label>处方状态：</label>
+          <el-select v-model="queryParams.prescriptionStatus" placeholder="全部" clearable style="width: 150px;">
+            <el-option label="全部" value="" />
+            <el-option label="未开始" :value="1" />
+            <el-option label="执行中" :value="2" />
+            <el-option label="已完成" :value="3" />
+            <el-option label="已结束" :value="4" />
+          </el-select>
+        </div>
+
+        <div class="filter-item">
+          <label>入组机构：</label>
+          <el-select v-model="queryParams.enrollmentInstitution" placeholder="全部" clearable style="width: 200px;">
+            <el-option label="全部" value="" />
+            <el-option
+              v-for="institution in institutions"
+              :key="institution"
+              :label="institution"
+              :value="institution"
+            />
+          </el-select>
+        </div>
       </div>
 
-      <div class="filter-item">
-        <el-select v-model="queryParams.prescriptionStatus" placeholder="处方状态" clearable style="width: 120px;">
-          <el-option label="全部" value="" />
-          <el-option label="已结束" value="已结束" />
-          <el-option label="创建中" value="创建中" />
-          <el-option label="执行中" value="执行中" />
-          <el-option label="已完成" value="已完成" />
-          <el-option label="未开始" value="未开始" />
-        </el-select>
-      </div>
+      <!-- 第二排 -->
+      <div class="filter-row">
+        <div class="filter-item">
+          <label>执行机构：</label>
+          <el-select v-model="queryParams.executionInstitution" placeholder="全部" clearable style="width: 150px;">
+            <el-option label="全部" value="" />
+            <el-option
+              v-for="institution in institutions"
+              :key="institution"
+              :label="institution"
+              :value="institution"
+            />
+          </el-select>
+        </div>
 
-      <div class="filter-item">
-        <el-select v-model="queryParams.enrollmentInstitution" placeholder="入组机构" clearable style="width: 200px;">
-          <el-option label="全部" value="" />
-          <el-option
-            v-for="institution in institutions"
-            :key="institution"
-            :label="institution"
-            :value="institution"
+        <div class="filter-item">
+          <label>开方医生：</label>
+          <el-input
+            v-model="queryParams.prescribingDoctor"
+            placeholder="请输入"
+            style="width: 150px;"
+            clearable
           />
-        </el-select>
-      </div>
+        </div>
 
-      <div class="filter-item">
-        <el-select v-model="queryParams.executionInstitution" placeholder="执行机构" clearable style="width: 200px;">
-          <el-option label="全部" value="" />
-          <el-option
-            v-for="institution in institutions"
-            :key="institution"
-            :label="institution"
-            :value="institution"
-          />
-        </el-select>
+        <div class="filter-item">
+          <el-button class="custom-primary-btn" icon="el-icon-search" @click="handleQuery">查询</el-button>
+          <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+        </div>
       </div>
+    </div>
 
-      <div class="filter-item">
-        <el-input
-          v-model="queryParams.prescribingDoctor"
-          placeholder="开方医生"
-          style="width: 150px;"
-          clearable
-        />
-      </div>
-
-      <div class="filter-item">
-        <el-input
-          v-model="queryParams.searchKeyword"
-          placeholder="患者姓名、电话或档案号"
-          style="width: 200px;"
-          clearable
-        />
-      </div>
-
-      <div class="filter-item">
-        <el-button type="primary" icon="el-icon-search" @click="handleQuery">查询</el-button>
-        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
-      </div>
+    <!-- 表格操作栏 -->
+    <div class="table-header">
+      <div class="table-title">运动处方列表</div>
+      <el-button class="custom-primary-btn" icon="el-icon-plus" @click="handleAdd">新增</el-button>
     </div>
 
     <!-- 数据表格 -->
@@ -85,14 +97,16 @@
       border
       highlight-current-row
       style="width: 100%"
+      :header-cell-style="{ color: 'rgb(37, 37, 37)', fontWeight: '500', backgroundColor: 'rgb(250, 250, 250)' }"
     >
-      <el-table-column prop="prescriptionName" label="运动处方名称" width="200" show-overflow-tooltip />
+      <el-table-column prop="prescriptionName" label="运动处方名称" width="220" align="center" header-align="center" />
 
       <el-table-column
         prop="patientInfo"
         label="患者信息"
         width="180"
-        show-overflow-tooltip
+        align="center"
+        header-align="center"
       >
         <template slot-scope="scope">
           <span>
@@ -105,15 +119,15 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="medicalRecordNo" label="档案号" width="150" />
+      <el-table-column prop="medicalRecordNo" label="档案号" width="180" align="center" header-align="center" />
 
-      <el-table-column prop="diseaseType" label="病种" width="150" />
+      <el-table-column prop="diseaseType" label="病种" width="150" align="center" header-align="center" />
 
-      <el-table-column prop="enrollmentInstitution" label="入组机构" width="180" />
+      <el-table-column prop="enrollmentInstitution" label="入组机构" width="200" align="center" header-align="center" />
 
-      <el-table-column prop="executionInstitution" label="执行机构" width="180" />
+      <el-table-column prop="executionInstitution" label="执行机构" width="200" align="center" header-align="center" />
 
-      <el-table-column prop="prescriptionStatus" label="处方状态" width="120">
+      <el-table-column prop="prescriptionStatus" label="处方状态" width="140" align="center" header-align="center">
         <template slot-scope="scope">
           <el-tag
             :type="getStatusType(scope.row.prescriptionStatus)"
@@ -124,14 +138,16 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="prescribingDoctor" label="开方医生" width="120" />
+      <el-table-column prop="prescribingDoctor" label="开方医生" width="140" align="center" header-align="center" />
 
-      <el-table-column prop="createdTime" label="创建时间" width="160" />
+      <el-table-column prop="createdTime" label="创建时间" width="180" align="center" header-align="center" />
 
       <el-table-column
         label="操作"
-        width="120"
+        width="140"
         fixed="right"
+        align="center"
+        header-align="center"
         class-name="small-padding fixed-width"
       >
         <template slot-scope="scope">
@@ -482,8 +498,17 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.button-container {
-  margin-bottom: 20px;
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+
+  .table-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+  }
 }
 
 .male-icon {
@@ -501,13 +526,94 @@ export default {
 }
 
 .filter-container {
-  .filter-item {
-    margin-right: 10px;
+  margin-bottom: 20px;
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     margin-bottom: 10px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .filter-item {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+    margin-bottom: 10px;
+
+    label {
+      margin-right: 8px;
+      font-weight: 500;
+      white-space: nowrap;
+      color: #606266;
+    }
+  }
+}
+
+// 自定义按钮样式
+.custom-primary-btn {
+  background-color: rgb(144, 126, 179);
+  border-color: rgb(144, 126, 179);
+  color: #fff;
+
+  &:hover,
+  &:focus {
+    background-color: rgb(134, 116, 169);
+    border-color: rgb(134, 116, 169);
+    color: #fff;
+  }
+
+  &:active {
+    background-color: rgb(124, 106, 159);
+    border-color: rgb(124, 106, 159);
   }
 }
 
 .el-table {
+  // 表头样式
+  ::v-deep .el-table__header th {
+    color: rgb(37, 37, 37);
+    font-weight: 500;
+    background-color: rgb(250, 250, 250);
+    padding: 16px 0;
+  }
+
+  // 表格单元格样式 - 增加内边距
+  ::v-deep .el-table__body td {
+    padding: 16px 0;
+  }
+
+  // 表头和单元格居中对齐
+  ::v-deep .el-table__header th,
+  ::v-deep .el-table__body td {
+    text-align: center;
+  }
+
+  // 操作列按钮样式
+  ::v-deep .el-button--text {
+    padding: 0 5px;
+    margin: 0 2px;
+    font-size: 14px;
+    color: rgb(106, 91, 140);
+
+    &:hover {
+      color: rgb(96, 81, 130);
+    }
+
+    // 图标颜色
+    i {
+      color: rgb(106, 91, 140);
+    }
+
+    &:hover i {
+      color: rgb(96, 81, 130);
+    }
+  }
+
   ::v-deep .fixed-width {
     .el-button--mini {
       padding: 2px 4px;
@@ -517,9 +623,13 @@ export default {
 
   // 固定操作列样式
   ::v-deep .el-table__fixed-right {
-    .el-table__fixed-right-patch {
-      background-color: #f5f7fa;
-    }
+    box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+  }
+
+  // 固定列的表头也需要背景色
+  ::v-deep .el-table__fixed-right .el-table__header th {
+    background-color: rgb(250, 250, 250);
   }
 }
 </style>

@@ -15,6 +15,14 @@
           <span class="label">手机号码：</span>
           <span class="value">{{ patientData.hiddenPhone || patientData.phone }}</span>
         </div>
+        <div class="info-row">
+          <span class="label">联系地址：</span>
+          <span class="value">{{ fullAddress }}</span>
+        </div>
+        <div v-if="patientDetail && patientDetail.remark" class="info-row">
+          <span class="label">备注说明：</span>
+          <span class="value">{{ patientDetail.remark }}</span>
+        </div>
       </div>
 
       <div class="action-area">
@@ -30,7 +38,7 @@
             :clearable="false"
           />
         </div>
-        <el-button type="info" size="small" @click="handleBack">返回</el-button>
+        <el-button class="custom-primary-btn" size="small" @click="handleBack">返回</el-button>
       </div>
     </div>
 
@@ -56,7 +64,7 @@
           上传报告
         </div>
         <div v-if="activeTab === 'upload'" class="upload-button">
-          <el-button type="primary" size="small" @click="showUploadForm">上传</el-button>
+          <el-button class="custom-primary-btn" size="small" @click="showUploadForm">上传</el-button>
         </div>
       </div>
 
@@ -148,8 +156,8 @@
             <!-- 操作按钮 -->
             <div class="form-actions">
               <el-button @click="resetForm">重置</el-button>
-              <el-button type="primary" @click="saveForm">保存</el-button>
-              <el-button type="primary" @click="cancelForm">返回</el-button>
+              <el-button class="custom-primary-btn" @click="saveForm">保存</el-button>
+              <el-button class="custom-primary-btn" @click="cancelForm">返回</el-button>
             </div>
           </div>
 
@@ -158,7 +166,7 @@
             <div class="empty-state">
               <i class="el-icon-upload"></i>
               <p>暂无上传报告</p>
-              <el-button type="primary" size="small" @click="showUploadForm">上传报告</el-button>
+              <el-button class="custom-primary-btn" size="small" @click="showUploadForm">上传报告</el-button>
             </div>
           </div>
         </div>
@@ -169,6 +177,7 @@
 
 <script>
 import { FileUtils } from '@/utils/fileUtils'
+import { getPatientDetail } from '@/api/patient'
 
 export default {
   name: 'PatientInfoDetail',
@@ -186,6 +195,8 @@ export default {
       activeTab: 'all',
       // 是否显示上传表单
       showForm: false,
+      // 患者详细信息
+      patientDetail: null,
       // 上传表单数据
       uploadForm: {
         name: '',
@@ -212,12 +223,47 @@ export default {
       uploadedFile: null
     }
   },
+  computed: {
+    // 完整地址 = 联系地址（省市区）+ 详细地址
+    fullAddress() {
+      if (!this.patientDetail) {
+        return this.patientData.address || '暂无'
+      }
+      const parts = []
+      if (this.patientDetail.contactProvinceCityDistrict) {
+        parts.push(this.patientDetail.contactProvinceCityDistrict)
+      }
+      if (this.patientDetail.detailAddress) {
+        parts.push(this.patientDetail.detailAddress)
+      }
+      return parts.length > 0 ? parts.join('') : '暂无'
+    }
+  },
   created() {
     // 设置默认入组日期为今天
     const today = new Date()
     this.enrollmentDate = this.formatDate(today)
+
+    // 加载患者详细信息
+    this.loadPatientDetail()
   },
   methods: {
+    /** 加载患者详细信息 */
+    async loadPatientDetail() {
+      try {
+        if (!this.patientData.id) {
+          console.error('患者ID不存在')
+          return
+        }
+        const response = await getPatientDetail(this.patientData.id)
+        if (response && response.data && response.data.detailInfo) {
+          this.patientDetail = response.data.detailInfo
+        }
+      } catch (error) {
+        console.error('加载患者详细信息失败:', error)
+      }
+    },
+
     // 返回上一页
     handleBack() {
       this.$emit('back')
@@ -592,6 +638,25 @@ export default {
         }
       }
     }
+  }
+}
+
+// 自定义按钮样式
+.custom-primary-btn {
+  background-color: rgb(106, 91, 140);
+  border-color: rgb(106, 91, 140);
+  color: #fff;
+
+  &:hover,
+  &:focus {
+    background-color: rgb(96, 81, 130);
+    border-color: rgb(96, 81, 130);
+    color: #fff;
+  }
+
+  &:active {
+    background-color: rgb(86, 71, 120);
+    border-color: rgb(86, 71, 120);
   }
 }
 

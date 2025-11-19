@@ -88,7 +88,7 @@ public class EduVideoAssetServiceImpl extends ServiceImpl<EduVideoAssetMapper, E
                 "视频",
                 videoVO.getVideoTitle(),
                 videoVO.getVideoDescription(),
-                videoVO.getCategorySection(),
+                videoVO.getModuleCategory(),
                 videoVO.getAuthor(),
                 entity.getViewCount(),
                 entity.getLikeCount()

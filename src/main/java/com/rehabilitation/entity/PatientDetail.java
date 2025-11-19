@@ -59,6 +59,12 @@ public class PatientDetail {
     private String contactProvinceCityDistrict;
 
     /**
+     * 详细地址（门牌号、小区名称等）
+     */
+    @TableField("detail_address")
+    private String detailAddress;
+
+    /**
      * 备注
      */
     @TableField("remark")

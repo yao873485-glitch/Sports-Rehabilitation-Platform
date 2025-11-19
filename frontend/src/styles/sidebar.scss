@@ -55,11 +55,17 @@
 
     .svg-icon {
       margin-right: 16px;
+      font-size: 15.75px;
     }
 
     .sub-el-icon {
       margin-right: 12px;
       margin-left: -2px;
+      font-size: 15.75px;
+    }
+
+    i {
+      font-size: 15.75px;
     }
 
     .el-menu {
@@ -67,12 +73,16 @@
       height: 100%;
       width: 100% !important;
       background-color: rgb(0, 21, 41) !important;
+      font-size: 15.75px;
     }
 
     // menu hover
     .submenu-title-noDropdown,
     .el-submenu__title {
       color: $menuText !important;
+      font-size: 15.75px !important;
+      height: 64px !important;
+      line-height: 64px !important;
 
       &:hover {
         background-color: $menuHover !important;
@@ -81,6 +91,9 @@
 
     .el-menu-item {
       color: $menuText !important;
+      font-size: 15.75px !important;
+      height: 64px !important;
+      line-height: 64px !important;
 
       &:hover {
         background-color: $menuHover !important;
@@ -98,7 +111,10 @@
 
     & .nest-menu .el-submenu>.el-submenu__title,
     & .el-submenu .el-menu-item {
-      min-height: 50px !important;
+      min-height: 64px !important;
+      height: 64px !important;
+      line-height: 64px !important;
+      font-size: 15.75px !important;
       background-color: $subMenuBg !important;
       color: $menuText !important;
 

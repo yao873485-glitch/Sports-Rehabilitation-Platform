@@ -5,7 +5,7 @@ import request from '@/utils/request'
 // 分页获取图文素材列表
 export function getContentList(params) {
   return request({
-    url: '/edu-content/page',
+    url: '/education/image-content/page',
     method: 'get',
     params
   })
@@ -14,12 +14,21 @@ export function getContentList(params) {
 // 根据ID获取图文素材详情
 export function getContentDetail(id) {
   return request({
-    url: `/edu-content/by-content-id/${id}`,
+    url: `/education/image-content/${id}`,
     method: 'get'
   })
 }
 
-// 添加图文素材
+// 保存图文素材
+export function saveImageContent(data) {
+  return request({
+    url: '/education/image-content',
+    method: 'post',
+    data
+  })
+}
+
+// 添加图文素材（旧接口，保留兼容性）
 export function addContent(data) {
   return request({
     url: '/edu-content',
@@ -40,7 +49,7 @@ export function updateContent(data) {
 // 删除图文素材
 export function deleteContentItem(id) {
   return request({
-    url: `/edu-content/${id}`,
+    url: `/education/image-content/${id}`,
     method: 'delete'
   })
 }
@@ -59,7 +68,7 @@ export function getVideoAssetList(params) {
 // 根据ID获取视频素材详情
 export function getVideoAssetDetail(id) {
   return request({
-    url: `/video-asset/by-video-id/${id}`,
+    url: `/video-asset/${id}`,
     method: 'get'
   })
 }
@@ -140,5 +149,34 @@ export function updateContentApplication(data) {
     url: `/content-application/${data.id}`,
     method: 'put',
     data
+  })
+}
+
+// ==================== 内容应用配置相关接口 ====================
+
+// 获取内容应用配置
+export function getContentConfig(contentId, contentType) {
+  return request({
+    url: '/content-config/get',
+    method: 'get',
+    params: { contentId, contentType }
+  })
+}
+
+// 保存内容应用配置
+export function saveContentConfig(data) {
+  return request({
+    url: '/content-config/save',
+    method: 'post',
+    data
+  })
+}
+
+// 删除内容应用配置
+export function deleteContentConfig(contentId, contentType) {
+  return request({
+    url: '/content-config/delete',
+    method: 'delete',
+    params: { contentId, contentType }
   })
 }

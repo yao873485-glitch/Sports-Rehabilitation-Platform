@@ -26,9 +26,9 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="el-icon-search" @click="handleQuery">查询</el-button>
+            <el-button class="custom-primary-btn" icon="el-icon-search" @click="handleQuery">查询</el-button>
             <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
-            <el-button type="success" icon="el-icon-plus" @click="handleAdd">新增</el-button>
+            <el-button class="custom-primary-btn" icon="el-icon-plus" @click="handleAdd">新增</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -378,6 +378,42 @@ export default {
   color: #909399;
   font-size: 12px;
   margin-top: 4px;
+}
+
+// 自定义按钮样式
+.custom-primary-btn {
+  background-color: rgb(106, 91, 140);
+  border-color: rgb(106, 91, 140);
+  color: #fff;
+
+  &:hover,
+  &:focus {
+    background-color: rgb(96, 81, 130);
+    border-color: rgb(96, 81, 130);
+    color: #fff;
+  }
+
+  &:active {
+    background-color: rgb(86, 71, 120);
+    border-color: rgb(86, 71, 120);
+  }
+}
+
+// 操作列按钮样式
+::v-deep .el-button--text {
+  color: rgb(106, 91, 140);
+
+  &:hover {
+    color: rgb(96, 81, 130);
+  }
+
+  i {
+    color: rgb(106, 91, 140);
+  }
+
+  &:hover i {
+    color: rgb(96, 81, 130);
+  }
 }
 
 .text-danger {
