@@ -292,6 +292,7 @@ export default {
       // 导入弹窗
       importVisible: false,
       importFile: null,
+      equipmentCodeDuplicate: false,
       // 表单校验
       rules: {
         region: [
@@ -304,7 +305,17 @@ export default {
           { required: true, message: '设备类型不能为空', trigger: 'blur' }
         ],
         equipmentCode: [
-          { required: true, message: '设备编号不能为空', trigger: 'blur' }
+          { required: true, message: '\u8bbe\u5907\u7f16\u53f7\u4e0d\u80fd\u4e3a\u7a7a', trigger: 'blur' },
+          {
+            validator: (rule, value, callback) => {
+              if (this.equipmentCodeDuplicate) {
+                callback(new Error('\u8bbe\u5907\u7f16\u53f7\u5df2\u5b58\u5728\uff0c\u8bf7\u4fdd\u6301\u552f\u4e00'))
+              } else {
+                callback()
+              }
+            },
+            trigger: 'blur'
+          }
         ],
         status: [
           { required: true, message: '状态不能为空', trigger: 'change' }
@@ -315,6 +326,18 @@ export default {
   created() {
     this.getList()
     this.getEquipmentTypes()
+  },
+  watch: {
+    'form.equipmentCode'() {
+      if (this.equipmentCodeDuplicate) {
+        this.equipmentCodeDuplicate = false
+        this.$nextTick(() => {
+          if (this.$refs.form) {
+            this.$refs.form.clearValidate(['equipmentCode'])
+          }
+        })
+      }
+    }
   },
   methods: {
     /** 查询设备列表 */
@@ -388,6 +411,12 @@ export default {
         status: '上架'
       }
       this.formVisible = true
+      this.equipmentCodeDuplicate = false
+      this.$nextTick(() => {
+        if (this.$refs.form) {
+          this.$refs.form.clearValidate()
+        }
+      })
     },
 
     /** 修改按钮操作 */
@@ -396,6 +425,12 @@ export default {
       getEquipmentDetail(row.id).then(response => {
         this.form = response.data
         this.formVisible = true
+        this.equipmentCodeDuplicate = false
+        this.$nextTick(() => {
+          if (this.$refs.form) {
+            this.$refs.form.clearValidate()
+          }
+        })
       })
     },
 
@@ -403,19 +438,24 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
-          if (this.form.id != null) {
-            updateEquipment(this.form.id, this.form).then(() => {
-              this.$message.success('修改成功')
-              this.formVisible = false
-              this.getList()
-            })
-          } else {
-            addEquipment(this.form).then(() => {
-              this.$message.success('新增成功')
-              this.formVisible = false
-              this.getList()
-            })
-          }
+          const request = this.form.id != null
+            ? updateEquipment(this.form.id, this.form)
+            : addEquipment(this.form)
+
+          request.then(() => {
+            this.$message.success(this.form.id != null ? '修改成功' : '新增成功')
+            this.formVisible = false
+            this.getList()
+          }).catch((error) => {
+            if (this.isDuplicateEquipmentCodeError(error)) {
+              this.equipmentCodeDuplicate = true
+              this.$nextTick(() => {
+                if (this.$refs.form) {
+                  this.$refs.form.validateField('equipmentCode')
+                }
+              })
+            }
+          })
         }
       })
     },
@@ -462,6 +502,11 @@ export default {
         this.getList()
         this.$message.success('批量下架成功')
       }).catch(() => {})
+    },
+
+    isDuplicateEquipmentCodeError(error) {
+      const message = (error && error.message) || (error && error.response && error.response.data && error.response.data.message) || ''
+      return message.includes('\u8bbe\u5907\u7f16\u53f7') || message.includes('\u7f16\u53f7\u552f\u4e00')
     },
 
     /** 批量导入 */

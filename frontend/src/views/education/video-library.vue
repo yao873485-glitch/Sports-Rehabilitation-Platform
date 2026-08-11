@@ -1,11 +1,12 @@
 <template>
-  <div class="video-library-container">
+  <div class="video-library-container" :class="{ 'fullscreen-mode': isFullscreen }">
     <el-card>
-      <div slot="header">
+      <div slot="header" class="card-header">
         <span>视频素材库</span>
       </div>
 
       <!-- 搜索筛选区域 -->
+      <div v-show="!isFullscreen" class="search-form-wrapper">
       <div class="search-form">
         <el-form :inline="true" :model="searchForm" ref="searchForm" size="small">
           <el-form-item label="发布日期" prop="publishDateRange">
@@ -72,53 +73,58 @@
           </el-form-item>
         </el-form>
       </div>
+      </div>
 
-      <!-- 操作按钮区域 -->
-      <div class="toolbar">
+      <!-- 工具栏 -->
+      <div class="toolbar-section">
         <div class="toolbar-right">
-          <el-button
-            type="primary"
-            @click="handleAdd"
-            icon="el-icon-plus"
-            size="small"
-          >
+          <el-button type="primary" size="small" icon="el-icon-plus" @click="handleAdd">
             添加内容
           </el-button>
-          <el-button icon="el-icon-refresh" circle size="small" @click="fetchData" title="刷新" />
-          <el-button icon="el-icon-s-operation" circle size="small" title="列设置" />
-          <el-button icon="el-icon-setting" circle size="small" title="设置" />
-          <el-button icon="el-icon-full-screen" circle size="small" @click="handleFullScreen" title="全屏" />
+          <table-toolbar
+            :columns="tableColumns"
+            :density="tableDensity"
+            :fullscreen="isFullscreen"
+            @refresh="handleRefresh"
+            @density-change="handleDensityChange"
+            @column-change="handleColumnChange"
+            @fullscreen-change="handleFullscreenChange"
+          />
         </div>
       </div>
 
       <!-- 视频素材列表 -->
       <el-table
+        ref="tableRef"
         :data="tableData"
         style="width: 100%"
         v-loading="loading"
         element-loading-text="加载中..."
+        stripe
+        border
+        :size="tableDensity"
       >
-        <el-table-column prop="videoTitle" label="视频标题" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="videoId" label="视频ID" width="150" show-overflow-tooltip />
-        <el-table-column prop="videoDescription" label="视频描述" min-width="250" show-overflow-tooltip />
-        <el-table-column prop="categorySection" label="所属板块" width="120" align="center" />
-        <el-table-column prop="viewCount" label="阅读量" width="100" align="center">
+        <el-table-column v-if="getColumnVisible('videoTitle')" prop="videoTitle" label="视频标题" min-width="200" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('videoId')" prop="videoId" label="视频ID" width="150" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('videoDescription')" prop="videoDescription" label="视频描述" min-width="250" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('categorySection')" prop="categorySection" label="所属板块" width="120" align="center" />
+        <el-table-column v-if="getColumnVisible('viewCount')" prop="viewCount" label="阅读量" width="100" align="center">
           <template slot-scope="scope">
             <span>{{ formatNumber(scope.row.viewCount) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="likeCount" label="点赞量" width="100" align="center">
+        <el-table-column v-if="getColumnVisible('likeCount')" prop="likeCount" label="点赞量" width="100" align="center">
           <template slot-scope="scope">
             <span>{{ formatNumber(scope.row.likeCount) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="author" label="作者" width="100" align="center" />
-        <el-table-column prop="publishTime" label="发布时间" width="160" align="center">
+        <el-table-column v-if="getColumnVisible('author')" prop="author" label="作者" width="100" align="center" />
+        <el-table-column v-if="getColumnVisible('publishTime')" prop="publishTime" label="发布时间" width="160" align="center">
           <template slot-scope="scope">
             {{ formatDateTime(scope.row.publishTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="contentStatus" label="内容状态" width="100" align="center">
+        <el-table-column v-if="getColumnVisible('contentStatus')" prop="contentStatus" label="内容状态" width="100" align="center">
           <template slot-scope="scope">
             <el-tag
               :type="getStatusType(scope.row.contentStatus)"
@@ -221,9 +227,13 @@
 
 <script>
 import { getVideoAssetList } from '@/api/education'
+import TableToolbar from '@/components/TableToolbar'
 
 export default {
   name: 'VideoLibrary',
+  components: {
+    TableToolbar
+  },
   data() {
     return {
       // 搜索表单
@@ -246,13 +256,49 @@ export default {
       // 对话框显示状态
       previewDialogVisible: false,
       // 当前操作的视频
-      currentVideo: null
+      currentVideo: null,
+      // 表格工具栏
+      tableDensity: 'default',
+      isFullscreen: false,
+      tableColumns: [
+        { prop: 'videoTitle', label: '视频标题', visible: true },
+        { prop: 'videoId', label: '视频ID', visible: true },
+        { prop: 'videoDescription', label: '视频描述', visible: true },
+        { prop: 'categorySection', label: '所属板块', visible: true },
+        { prop: 'viewCount', label: '阅读量', visible: true },
+        { prop: 'likeCount', label: '点赞量', visible: true },
+        { prop: 'author', label: '作者', visible: true },
+        { prop: 'publishTime', label: '发布时间', visible: true },
+        { prop: 'contentStatus', label: '内容状态', visible: true }
+      ]
     }
   },
   created() {
     this.fetchData()
   },
   methods: {
+    // 获取列的可见性
+    getColumnVisible(prop) {
+      const column = this.tableColumns.find(col => col.prop === prop)
+      return column ? column.visible : true
+    },
+    // 刷新
+    handleRefresh() {
+      this.fetchData()
+      this.$message.success('刷新成功')
+    },
+    // 密度变化
+    handleDensityChange(density) {
+      this.tableDensity = density
+    },
+    // 列显示变化
+    handleColumnChange(columns) {
+      // columns 已经被修改了，不需要额外处理
+    },
+    // 全屏切换
+    handleFullscreenChange(fullscreen) {
+      this.isFullscreen = fullscreen
+    },
     // 获取数据
     async fetchData() {
       this.loading = true
@@ -351,15 +397,6 @@ export default {
     formatNumber(num) {
       if (!num) return '0'
       return num.toString()
-    },
-    // 全屏显示
-    handleFullScreen() {
-      const element = document.documentElement
-      if (document.fullscreenElement) {
-        document.exitFullscreen()
-      } else {
-        element.requestFullscreen()
-      }
     }
   }
 }
@@ -369,35 +406,86 @@ export default {
 .video-library-container {
   padding: 20px;
 
+  &.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background-color: #fff;
+    padding: 0;
+    margin: 0;
+
+    ::v-deep .el-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border: none;
+
+      .el-card__header {
+        flex-shrink: 0;
+        border-bottom: none;
+      }
+
+      .el-card__body {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+      }
+
+      .toolbar-section {
+        flex-shrink: 0;
+        border-bottom: 1px solid #ebeef5;
+      }
+
+      .el-table {
+        flex: 1;
+      }
+
+      .pagination-container {
+        flex-shrink: 0;
+        padding: 10px 20px;
+        border-top: 1px solid #ebeef5;
+      }
+    }
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    ::v-deep .table-toolbar {
+      display: flex;
+      gap: 8px;
+    }
+  }
+
+  .search-form-wrapper {
+    margin-bottom: 0;
+  }
+
   .search-form {
-    margin-bottom: 20px;
     padding: 20px;
     background-color: #f5f5f5;
     border-radius: 4px;
   }
 
-  .toolbar {
-    margin-bottom: 20px;
+  .toolbar-section {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    padding: 16px 20px;
+    background-color: #fff;
+    border-bottom: 1px solid #ebeef5;
 
     .toolbar-right {
       display: flex;
-      gap: 8px;
       align-items: center;
-
-      .el-button.is-circle {
-        padding: 8px;
-        border-color: #dcdfe6;
-        color: #606266;
-
-        &:hover {
-          color: #409eff;
-          border-color: #c6e2ff;
-          background-color: #ecf5ff;
-        }
-      }
+      gap: 12px;
     }
   }
 
@@ -482,6 +570,11 @@ export default {
       font-weight: 600;
     }
   }
+}
+
+::v-deep .el-form--inline .el-form-item {
+  margin-bottom: 10px;
+  margin-right: 15px;
 }
 
 // 日期选择器分隔符样式

@@ -136,14 +136,15 @@
           >
             查看
           </el-button>
-          <el-button
-            type="text"
-            size="small"
-            icon="el-icon-document"
-            @click="handleList(scope.row)"
-          >
-            清单
-          </el-button>
+          <el-dropdown trigger="hover" @command="(command) => handleListCommand(command, scope.row)">
+            <el-button type="text" size="small" icon="el-icon-document">
+              清单<i class="el-icon-arrow-down el-icon--right" />
+            </el-button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="prescription">执行清单</el-dropdown-item>
+              <el-dropdown-item command="assessment">评定清单</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </template>
       </el-table-column>
     </el-table>
@@ -157,61 +158,14 @@
       @pagination="getList"
     />
 
-    <!-- 查看详情对话框 -->
-    <el-dialog
-      title="方案详情"
-      :visible.sync="detailVisible"
-      width="800px"
-      append-to-body
-    >
-      <div v-if="currentScheme" class="scheme-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="患者姓名">{{ currentScheme.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ currentScheme.gender }}</el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ calculateAge(currentScheme.birthDate) }}岁</el-descriptions-item>
-          <el-descriptions-item label="档案号">{{ currentScheme.medicalRecordNo }}</el-descriptions-item>
-          <el-descriptions-item label="方案编号">{{ currentScheme.schemeId }}</el-descriptions-item>
-          <el-descriptions-item label="病种">{{ currentScheme.diseaseType }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="currentScheme.status === 1 ? 'success' : 'info'">
-              {{ currentScheme.status === 1 ? '执行中' : '已结束' }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="入组机构">{{ currentScheme.enrollmentInstitution }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ currentScheme.createTime }}</el-descriptions-item>
-          <el-descriptions-item label="结束时间">{{ currentScheme.endTime || '暂无' }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="detailVisible = false">关 闭</el-button>
-      </span>
-    </el-dialog>
-
-    <!-- 处方清单对话框 -->
-    <el-dialog
-      title="运动处方清单"
-      :visible.sync="listVisible"
-      width="1200px"
-      append-to-body
-      :close-on-click-modal="false"
-    >
-      <prescription-list
-        v-if="listVisible && currentScheme"
-        :scheme-info="currentScheme"
-        @close="listVisible = false"
-      />
-    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getPatientSchemeInfoList, getPatientSchemeInfoDetail } from '@/api/patient-scheme-info'
+import { getPatientSchemeInfoList } from '@/api/patient-scheme-info'
 
 export default {
   name: 'SchemeQuery',
-  components: {
-    PrescriptionList: () => import('./components/PrescriptionList')
-  },
   data() {
     return {
       // 遮罩层
@@ -229,12 +183,7 @@ export default {
         searchKeyword: '',
         orgName: '',
         status: ''
-      },
-      // 详情弹窗
-      detailVisible: false,
-      // 清单弹窗
-      listVisible: false,
-      currentScheme: null
+      }
     }
   },
   created() {
@@ -297,21 +246,37 @@ export default {
 
     /** 查看详情 */
     handleView(row) {
-      getPatientSchemeInfoDetail(row.id).then(response => {
-        this.currentScheme = response.data
-        this.detailVisible = true
+      // 跳转到患者查看页面，只传递 patientId，让目标页面自己加载完整数据
+      this.$router.push({
+        path: '/scheme/patient-view',
+        query: {
+          patientId: row.patientId,
+          schemeId: row.schemeId || row.id // 保留方案ID以便后续使用
+        }
       })
     },
 
-    /** 清单操作 */
-    handleList(row) {
-      getPatientSchemeInfoDetail(row.id).then(response => {
-        this.currentScheme = response.data
-        this.listVisible = true
-      }).catch(error => {
-        console.error('获取方案详情失败:', error)
-        this.$message.error('获取方案详情失败')
-      })
+    /** 清单下拉菜单操作 */
+    handleListCommand(command, row) {
+      if (command === 'prescription') {
+        // 执行清单 - 跳转到处方执行清单页面
+        this.$router.push({
+          path: '/prescription/prescription-list',
+          query: {
+            patientId: row.patientId,
+            schemeId: row.schemeId
+          }
+        })
+      } else if (command === 'assessment') {
+        // 评定清单 - 跳转到评定执行清单页面
+        this.$router.push({
+          path: '/assessment/assessment-list',
+          query: {
+            patientId: row.patientId,
+            schemeId: row.schemeId
+          }
+        })
+      }
     },
 
     /** 患者详情 */
@@ -478,6 +443,18 @@ export default {
   // 固定列的表头也需要背景色
   ::v-deep .el-table__fixed-right .el-table__header th {
     background-color: rgb(250, 250, 250);
+  }
+
+  // 下拉菜单项样式
+  ::v-deep .el-dropdown-menu__item {
+    font-size: 14px;
+    padding: 8px 20px;
+    color: rgb(37, 37, 37);
+
+    &:hover {
+      background-color: #f5f7fa;
+      color: rgb(106, 91, 140);
+    }
   }
 }
 </style>

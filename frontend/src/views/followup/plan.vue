@@ -1,12 +1,12 @@
 <template>
-  <div class="followup-plan-container">
+  <div class="followup-plan-container" :class="{ 'fullscreen-mode': isFullscreen }">
     <el-card>
       <div slot="header">
         <span>随访计划管理</span>
       </div>
 
       <!-- 搜索筛选区域 -->
-      <div class="search-form">
+      <div v-show="!isFullscreen" class="search-form">
         <el-form :inline="true" :model="searchForm" ref="searchForm" size="small">
           <el-form-item label="计划名称" prop="planName">
             <el-input
@@ -50,10 +50,15 @@
           >
             新增
           </el-button>
-          <el-button icon="el-icon-refresh" circle size="small" @click="getList" title="刷新" />
-          <el-button icon="el-icon-s-operation" circle size="small" title="列设置" />
-          <el-button icon="el-icon-setting" circle size="small" title="设置" />
-          <el-button icon="el-icon-full-screen" circle size="small" title="全屏" />
+          <table-toolbar
+            :columns="tableColumns"
+            :density="tableDensity"
+            :fullscreen="isFullscreen"
+            @refresh="handleRefresh"
+            @density-change="handleDensityChange"
+            @column-change="handleColumnChange"
+            @fullscreen-change="handleFullscreenChange"
+          />
         </div>
       </div>
 
@@ -63,11 +68,12 @@
         style="width: 100%"
         v-loading="loading"
         element-loading-text="加载中..."
+        :size="tableDensity"
       >
-        <el-table-column prop="planName" label="计划名称" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="linkedProjectName" label="随访项目" width="150" show-overflow-tooltip />
-        <el-table-column prop="versionNumber" label="当前版本号" width="100" align="center" />
-        <el-table-column prop="status" label="状态" width="100" align="center">
+        <el-table-column v-if="getColumnVisible('planName')" prop="planName" label="计划名称" min-width="180" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('linkedProjectName')" prop="linkedProjectName" label="随访项目" width="150" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('versionNumber')" prop="versionNumber" label="当前版本号" width="100" align="center" />
+        <el-table-column v-if="getColumnVisible('status')" prop="status" label="状态" width="100" align="center">
           <template slot-scope="scope">
             <el-tag
               :type="getStatusType(scope.row.status)"
@@ -77,18 +83,18 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="updatedTime" label="最近一次修改时间" width="180" align="center">
+        <el-table-column v-if="getColumnVisible('updatedTime')" prop="updatedTime" label="最近一次修改时间" width="180" align="center">
           <template slot-scope="scope">
             {{ formatDateTime(scope.row.updatedTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="createdTime" label="创建时间" width="180" align="center">
+        <el-table-column v-if="getColumnVisible('createdTime')" prop="createdTime" label="创建时间" width="180" align="center">
           <template slot-scope="scope">
             {{ formatDateTime(scope.row.createdTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="versionRemark" label="版本备注" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="invitationQrCodeUrl" label="随访邀请二维码" width="140" align="center">
+        <el-table-column v-if="getColumnVisible('versionRemark')" prop="versionRemark" label="版本备注" min-width="120" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('invitationQrCodeUrl')" prop="invitationQrCodeUrl" label="随访邀请二维码" width="140" align="center">
           <template slot-scope="scope">
             <div v-if="scope.row.invitationQrCodeUrl" class="qr-code-container">
               <el-image
@@ -114,7 +120,7 @@
             <span v-else class="no-qr-code">暂无二维码</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column v-if="getColumnVisible('actions')" label="操作" width="180" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
               type="text"
@@ -235,9 +241,13 @@
 
 <script>
 import { getFollowupPlanList, deleteFollowupPlan } from '@/api/followup'
+import TableToolbar from '@/components/TableToolbar'
 
 export default {
   name: 'FollowupPlan',
+  components: {
+    TableToolbar
+  },
   data() {
     return {
       // 搜索表单
@@ -258,13 +268,42 @@ export default {
       detailDialogVisible: false,
       deleteDialogVisible: false,
       // 当前操作的计划
-      currentPlan: null
+      currentPlan: null,
+      tableDensity: 'default',
+      isFullscreen: false,
+      tableColumns: [
+        { prop: 'planName', label: '计划名称', visible: true },
+        { prop: 'linkedProjectName', label: '随访项目', visible: true },
+        { prop: 'versionNumber', label: '当前版本号', visible: true },
+        { prop: 'status', label: '状态', visible: true },
+        { prop: 'updatedTime', label: '最近一次修改时间', visible: true },
+        { prop: 'createdTime', label: '创建时间', visible: true },
+        { prop: 'versionRemark', label: '版本备注', visible: true },
+        { prop: 'invitationQrCodeUrl', label: '随访邀请二维码', visible: true },
+        { prop: 'actions', label: '操作', visible: true }
+      ]
     }
   },
   created() {
     this.fetchData()
   },
   methods: {
+    getColumnVisible(prop) {
+      const column = this.tableColumns.find(col => col.prop === prop)
+      return column ? column.visible : true
+    },
+    handleRefresh() {
+      this.fetchData()
+    },
+    handleDensityChange(density) {
+      this.tableDensity = density
+    },
+    handleColumnChange() {
+      // columns 已在组件内更新
+    },
+    handleFullscreenChange(fullscreen) {
+      this.isFullscreen = fullscreen
+    },
     // 获取数据
     async fetchData() {
       this.loading = true
@@ -369,6 +408,54 @@ export default {
 <style lang="scss" scoped>
 .followup-plan-container {
   padding: 20px;
+
+  &.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background-color: #fff;
+    padding: 0;
+    margin: 0;
+
+    ::v-deep .el-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border: none;
+
+      .el-card__header {
+        flex-shrink: 0;
+        border-bottom: none;
+      }
+
+      .el-card__body {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+      }
+
+      .toolbar {
+        flex-shrink: 0;
+        border-bottom: 1px solid #ebeef5;
+        padding: 12px 20px;
+      }
+
+      .el-table {
+        flex: 1;
+      }
+
+      .pagination-container {
+        flex-shrink: 0;
+        padding: 10px 20px;
+        border-top: 1px solid #ebeef5;
+      }
+    }
+  }
 
   .search-form {
     margin-bottom: 20px;

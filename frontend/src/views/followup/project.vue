@@ -1,12 +1,12 @@
 <template>
-  <div class="followup-project-container">
+  <div class="followup-project-container" :class="{ 'fullscreen-mode': isFullscreen }">
     <el-card>
       <div slot="header">
         <span>随访项目管理</span>
       </div>
 
       <!-- 搜索筛选区域 -->
-      <div class="search-form">
+      <div v-show="!isFullscreen" class="search-form">
         <el-form :inline="true" :model="searchForm" ref="searchForm" size="small">
           <el-form-item label="项目名称" prop="projectName">
             <el-input
@@ -60,10 +60,15 @@
           >
             新增
           </el-button>
-          <el-button icon="el-icon-refresh" circle size="small" @click="getList" title="刷新" />
-          <el-button icon="el-icon-s-operation" circle size="small" title="列设置" />
-          <el-button icon="el-icon-setting" circle size="small" title="设置" />
-          <el-button icon="el-icon-full-screen" circle size="small" title="全屏" />
+          <table-toolbar
+            :columns="tableColumns"
+            :density="tableDensity"
+            :fullscreen="isFullscreen"
+            @refresh="handleRefresh"
+            @density-change="handleDensityChange"
+            @column-change="handleColumnChange"
+            @fullscreen-change="handleFullscreenChange"
+          />
         </div>
       </div>
 
@@ -73,23 +78,24 @@
         style="width: 100%"
         v-loading="loading"
         element-loading-text="加载中..."
+        :size="tableDensity"
       >
-        <el-table-column prop="projectCode" label="项目编号" width="180" show-overflow-tooltip />
-        <el-table-column prop="projectName" label="项目名称" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="projectDescription" label="项目介绍" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="linkedFollowupPlan" label="绑定随访计划" width="150" show-overflow-tooltip />
-        <el-table-column prop="lastModifiedTime" label="最后修改时间" width="160" align="center">
+        <el-table-column v-if="getColumnVisible('projectCode')" prop="projectCode" label="项目编号" width="180" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('projectName')" prop="projectName" label="项目名称" min-width="150" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('projectDescription')" prop="projectDescription" label="项目介绍" min-width="200" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('linkedFollowupPlan')" prop="linkedFollowupPlan" label="绑定随访计划" width="150" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('lastModifiedTime')" prop="lastModifiedTime" label="最后修改时间" width="160" align="center">
           <template slot-scope="scope">
             {{ formatDateTime(scope.row.lastModifiedTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="createdTime" label="创建时间" width="160" align="center">
+        <el-table-column v-if="getColumnVisible('createdTime')" prop="createdTime" label="创建时间" width="160" align="center">
           <template slot-scope="scope">
             {{ formatDateTime(scope.row.createdTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="operator" label="操作人" width="100" align="center" show-overflow-tooltip />
-        <el-table-column prop="isPublished" label="是否发布" width="100" align="center">
+        <el-table-column v-if="getColumnVisible('operator')" prop="operator" label="操作人" width="100" align="center" show-overflow-tooltip />
+        <el-table-column v-if="getColumnVisible('isPublished')" prop="isPublished" label="是否发布" width="100" align="center">
           <template slot-scope="scope">
             <el-tag
               :type="scope.row.isPublished ? 'success' : 'info'"
@@ -99,7 +105,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" align="center" fixed="right">
+        <el-table-column v-if="getColumnVisible('actions')" label="操作" width="150" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
               type="text"
@@ -171,9 +177,13 @@
 
 <script>
 import { getFollowupProjectConfigList } from '@/api/followup'
+import TableToolbar from '@/components/TableToolbar'
 
 export default {
   name: 'FollowupProject',
+  components: {
+    TableToolbar
+  },
   data() {
     return {
       // 搜索表单
@@ -194,13 +204,42 @@ export default {
       // 对话框显示状态
       detailDialogVisible: false,
       // 当前操作的项目
-      currentProject: null
+      currentProject: null,
+      tableDensity: 'default',
+      isFullscreen: false,
+      tableColumns: [
+        { prop: 'projectCode', label: '项目编号', visible: true },
+        { prop: 'projectName', label: '项目名称', visible: true },
+        { prop: 'projectDescription', label: '项目介绍', visible: true },
+        { prop: 'linkedFollowupPlan', label: '绑定随访计划', visible: true },
+        { prop: 'lastModifiedTime', label: '最后修改时间', visible: true },
+        { prop: 'createdTime', label: '创建时间', visible: true },
+        { prop: 'operator', label: '操作人', visible: true },
+        { prop: 'isPublished', label: '是否发布', visible: true },
+        { prop: 'actions', label: '操作', visible: true }
+      ]
     }
   },
   created() {
     this.fetchData()
   },
   methods: {
+    getColumnVisible(prop) {
+      const column = this.tableColumns.find(col => col.prop === prop)
+      return column ? column.visible : true
+    },
+    handleRefresh() {
+      this.fetchData()
+    },
+    handleDensityChange(density) {
+      this.tableDensity = density
+    },
+    handleColumnChange() {
+      // columns 已在组件内更新
+    },
+    handleFullscreenChange(fullscreen) {
+      this.isFullscreen = fullscreen
+    },
     // 获取数据
     async fetchData() {
       this.loading = true
@@ -293,6 +332,54 @@ export default {
 <style lang="scss" scoped>
 .followup-project-container {
   padding: 20px;
+
+  &.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background-color: #fff;
+    padding: 0;
+    margin: 0;
+
+    ::v-deep .el-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border: none;
+
+      .el-card__header {
+        flex-shrink: 0;
+        border-bottom: none;
+      }
+
+      .el-card__body {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+      }
+
+      .toolbar {
+        flex-shrink: 0;
+        border-bottom: 1px solid #ebeef5;
+        padding: 12px 20px;
+      }
+
+      .el-table {
+        flex: 1;
+      }
+
+      .pagination-container {
+        flex-shrink: 0;
+        padding: 10px 20px;
+        border-top: 1px solid #ebeef5;
+      }
+    }
+  }
 
   .search-form {
     margin-bottom: 20px;

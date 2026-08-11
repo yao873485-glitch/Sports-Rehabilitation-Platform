@@ -65,7 +65,7 @@ export function updateFollowupProjectConfig(data) {
 // 分页获取随访项目列表
 export function getFollowupProjectList(params) {
   return request({
-    url: '/api/followup-program/page',
+    url: '/followup-program/page',
     method: 'get',
     params
   })
@@ -74,7 +74,7 @@ export function getFollowupProjectList(params) {
 // 根据ID获取随访项目详情
 export function getFollowupProjectDetail(id) {
   return request({
-    url: `/api/followup-program/${id}`,
+    url: `/followup-program/${id}`,
     method: 'get'
   })
 }
@@ -82,7 +82,7 @@ export function getFollowupProjectDetail(id) {
 // 更新随访项目
 export function updateFollowupProject(data) {
   return request({
-    url: '/api/followup-program',
+    url: '/followup-program',
     method: 'put',
     data
   })
@@ -91,7 +91,7 @@ export function updateFollowupProject(data) {
 // 根据计划创建随访项目
 export function createFollowupProject(data) {
   return request({
-    url: '/api/followup-program/create',
+    url: '/followup-program/create',
     method: 'post',
     data
   })
@@ -100,7 +100,7 @@ export function createFollowupProject(data) {
 // 获取指定模板的项目数量
 export function getProjectCountByTemplate(templateName) {
   return request({
-    url: `/api/followup-program/count/${templateName}`,
+    url: `/followup-program/count/${templateName}`,
     method: 'get'
   })
 }
@@ -109,17 +109,20 @@ export function getProjectCountByTemplate(templateName) {
 
 // 分页获取随访计划列表
 export function getFollowupPlanList(params) {
+  console.log('[API] getFollowupPlanList 调用，参数:', params)
+  console.log('[API] 请求URL: /followup-plan/page (baseURL会自动添加/api前缀)')
+  console.log('[API] 请求方法: GET')
   return request({
-    url: '/api/followup-plan/page',
-    method: 'get',
-    params
+    url: '/followup-plan/page',
+    method: 'GET',
+    params: params
   })
 }
 
 // 根据ID获取随访计划详情
 export function getFollowupPlanDetail(id) {
   return request({
-    url: `/api/followup-plan/${id}`,
+    url: `/followup-plan/${id}`,
     method: 'get'
   })
 }
@@ -127,7 +130,7 @@ export function getFollowupPlanDetail(id) {
 // 删除随访计划
 export function deleteFollowupPlan(id) {
   return request({
-    url: `/api/followup-plan/${id}`,
+    url: `/followup-plan/${id}`,
     method: 'delete'
   })
 }
@@ -135,7 +138,7 @@ export function deleteFollowupPlan(id) {
 // 根据模板创建随访计划
 export function createFollowupPlan(data) {
   return request({
-    url: '/api/followup-plan/create',
+    url: '/followup-plan/create',
     method: 'post',
     data
   })
@@ -144,7 +147,7 @@ export function createFollowupPlan(data) {
 // 保存随访计划（草稿或发布）
 export function saveFollowupPlan(data) {
   return request({
-    url: '/api/followup-plan',
+    url: '/followup-plan',
     method: 'post',
     data
   })

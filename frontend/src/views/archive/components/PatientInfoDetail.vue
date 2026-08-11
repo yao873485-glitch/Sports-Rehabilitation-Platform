@@ -9,7 +9,7 @@
           <span class="label gender-label">性别：</span>
           <span class="value">{{ patientData.gender }}</span>
           <span class="label age-label">年龄：</span>
-          <span class="value">{{ patientData.age }}岁</span>
+          <span class="value">{{ displayAge }}岁</span>
         </div>
         <div class="info-row">
           <span class="label">手机号码：</span>
@@ -237,6 +237,13 @@ export default {
         parts.push(this.patientDetail.detailAddress)
       }
       return parts.length > 0 ? parts.join('') : '暂无'
+    },
+    displayAge() {
+      const explicitAge = this.patientData?.age
+      if (explicitAge !== null && explicitAge !== undefined && explicitAge !== '') {
+        return explicitAge
+      }
+      return this.calculateAge(this.patientData?.birthDate)
     }
   },
   created() {
@@ -248,6 +255,19 @@ export default {
     this.loadPatientDetail()
   },
   methods: {
+    /** 计算年龄 */
+    calculateAge(birthDate) {
+      if (!birthDate) return ''
+      const birth = new Date(birthDate)
+      if (Number.isNaN(birth.getTime())) return ''
+      const today = new Date()
+      let age = today.getFullYear() - birth.getFullYear()
+      const monthDiff = today.getMonth() - birth.getMonth()
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--
+      }
+      return age
+    },
     /** 加载患者详细信息 */
     async loadPatientDetail() {
       try {

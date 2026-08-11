@@ -101,16 +101,16 @@
         <template slot-scope="scope">
           <div class="patient-info">
             <span class="patient-name">{{ scope.row.patientName }}</span>
-            <span :class="scope.row.gender === '男' ? 'male-icon' : 'female-icon'">
-              {{ scope.row.gender === '男' ? '♂' : '♀' }}
+            <span :class="scope.row.genderDesc === '男' ? 'male-icon' : 'female-icon'">
+              {{ scope.row.genderDesc === '男' ? '♂' : '♀' }}
             </span>
-            <span class="patient-age">{{ calculateAge(scope.row.birthDate) }}岁</span>
+            <span class="patient-age">{{ scope.row.age }}岁</span>
           </div>
         </template>
       </el-table-column>
 
       <!-- 其他字段 -->
-      <el-table-column prop="medicalRecordNo" label="档案号" width="200" align="center" header-align="center" />
+      <el-table-column prop="archiveNo" label="档案号" width="200" align="center" header-align="center" />
       <el-table-column prop="schemeId" label="方案编号" width="220" align="center" header-align="center" />
       <el-table-column prop="diseaseType" label="病种" width="180" align="center" header-align="center" />
       <el-table-column label="状态" width="140" align="center" header-align="center">
@@ -153,14 +153,15 @@
           >
             结束
           </el-button>
-          <el-button
-            type="text"
-            size="small"
-            icon="el-icon-document"
-            @click="handleList(scope.row)"
-          >
-            清单
-          </el-button>
+          <el-dropdown trigger="hover" @command="(command) => handleListCommand(command, scope.row)">
+            <el-button type="text" size="small" icon="el-icon-document">
+              清单<i class="el-icon-arrow-down el-icon--right" />
+            </el-button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="prescription">执行清单</el-dropdown-item>
+              <el-dropdown-item command="assessment">评定清单</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </template>
       </el-table-column>
     </el-table>
@@ -174,34 +175,35 @@
       @pagination="getList"
     />
 
-    <!-- 查看详情对话框 -->
+    <!-- 结束方案弹窗 -->
     <el-dialog
-      title="方案详情"
-      :visible.sync="detailVisible"
-      width="800px"
-      append-to-body
+      title="确认结束"
+      :visible.sync="endDialogVisible"
+      width="560px"
+      :close-on-click-modal="false"
     >
-      <div v-if="currentScheme" class="scheme-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="患者姓名">{{ currentScheme.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ currentScheme.gender }}</el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ calculateAge(currentScheme.birthDate) }}岁</el-descriptions-item>
-          <el-descriptions-item label="档案号">{{ currentScheme.medicalRecordNo }}</el-descriptions-item>
-          <el-descriptions-item label="方案编号">{{ currentScheme.schemeId }}</el-descriptions-item>
-          <el-descriptions-item label="病种">{{ currentScheme.diseaseType }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="currentScheme.status === 1 ? 'success' : 'info'">
-              {{ currentScheme.status === 1 ? '执行中' : '已结束' }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="开方医生">{{ currentScheme.doctorName }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ currentScheme.createTime }}</el-descriptions-item>
-          <el-descriptions-item label="结束时间">{{ currentScheme.endTime || '暂无' }}</el-descriptions-item>
-        </el-descriptions>
+      <el-form label-width="100px">
+        <el-form-item label="填作原因" required>
+          <el-input
+            v-model="endReason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入详细原因"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" style="text-align: center;">
+        <el-button
+          type="primary"
+          :loading="endLoading"
+          style="background-color: rgb(106, 91, 140); border-color: rgb(106, 91, 140);"
+          @click="confirmEnd"
+        >
+          确认
+        </el-button>
       </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="detailVisible = false">关 闭</el-button>
-      </span>
     </el-dialog>
 
     <!-- 患者选择弹窗 -->
@@ -214,7 +216,7 @@
 </template>
 
 <script>
-import { getMedicalSchemeList, getMedicalSchemeDetail, endMedicalScheme, checkPatientHasActiveScheme } from '@/api/medical-scheme'
+import { getMedicalSchemeList, endMedicalScheme, checkPatientHasActiveScheme } from '@/api/medical-scheme'
 import PatientSelectDialog from './components/PatientSelectDialog.vue'
 
 export default {
@@ -238,13 +240,15 @@ export default {
         diseaseType: '',
         doctorName: '',
         searchKeyword: '',
-        status: 1 // 默认查询执行中的方案
+        status: '' // 默认查询所有状态的方案
       },
-      // 详情弹窗
-      detailVisible: false,
-      currentScheme: null,
       // 患者选择弹窗
-      patientSelectVisible: false
+      patientSelectVisible: false,
+      // 结束方案弹窗
+      endDialogVisible: false,
+      endReason: '',
+      endLoading: false,
+      currentEndSchemeId: null
     }
   },
   created() {
@@ -312,31 +316,91 @@ export default {
 
     /** 查看详情 */
     handleView(row) {
-      getMedicalSchemeDetail(row.id).then(response => {
-        this.currentScheme = response.data
-        this.detailVisible = true
+      // 跳转到患者查看页面，只传递 patientId，让目标页面自己加载完整数据
+      this.$router.push({
+        path: '/scheme/patient-view',
+        query: {
+          patientId: row.patientId,
+          schemeId: row.schemeId || row.id // 保留方案ID以便后续使用
+        }
       })
     },
 
     /** 结束方案 */
     handleEnd(row) {
-      this.$confirm('确认要结束该方案吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        endMedicalScheme(row.id).then(() => {
-          this.$message.success('方案已结束')
-          this.getList()
-        }).catch(() => {
-          this.$message.error('操作失败')
-        })
-      })
+      this.currentEndSchemeId = row.id
+      this.endReason = ''
+      this.endDialogVisible = true
     },
 
-    /** 清单操作 */
-    handleList(row) {
-      this.$message.info('清单功能正在开发中...')
+    /** 确认结束方案 */
+    confirmEnd() {
+      if (!this.endReason || !this.endReason.trim()) {
+        this.$message.warning('请填写结束原因')
+        return
+      }
+
+      this.endLoading = true
+      endMedicalScheme(this.currentEndSchemeId, this.endReason)
+        .then(() => {
+          this.$message.success('方案已结束')
+          this.endDialogVisible = false
+          this.endReason = ''
+
+          // 找到当前结束的方案在列表中的索引，直接更新其状态
+          const index = this.schemeList.findIndex(item => item.id === this.currentEndSchemeId)
+          if (index !== -1) {
+            // 直接更新该行数据的状态
+            this.$set(this.schemeList[index], 'status', 2)
+            this.$set(this.schemeList[index], 'statusDesc', '已结束')
+            this.$set(this.schemeList[index], 'endTime', new Date().toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            }).replace(/\//g, '-'))
+          }
+
+          this.currentEndSchemeId = null
+
+          // 如果当前筛选条件是"执行中"，则切换到"全部"以显示刚结束的方案
+          if (this.queryParams.status === 1) {
+            this.queryParams.status = ''
+            this.getList()
+          }
+        })
+        .catch(() => {
+          this.$message.error('操作失败')
+        })
+        .finally(() => {
+          this.endLoading = false
+        })
+    },
+
+    /** 清单下拉菜单操作 */
+    handleListCommand(command, row) {
+      if (command === 'prescription') {
+        // 执行清单 - 跳转到处方执行清单页面
+        this.$router.push({
+          path: '/prescription/prescription-list',
+          query: {
+            patientId: row.patientId,
+            schemeId: row.schemeId
+          }
+        })
+      } else if (command === 'assessment') {
+        // 评定清单 - 跳转到评定执行清单页面
+        this.$router.push({
+          path: '/assessment/assessment-list',
+          query: {
+            patientId: row.patientId,
+            schemeId: row.schemeId
+          }
+        })
+      }
     },
 
     /** 新增方案 - 打开患者选择弹窗 */
@@ -359,15 +423,14 @@ export default {
           return
         }
 
-        // 患者没有执行中的方案，关闭选择弹窗，跳转到患者创建页面（复用快速建档流程）
+        // 患者没有执行中的方案，关闭选择弹窗，直接进入方案配置页
         this.patientSelectVisible = false
 
-        // 跳转到患者创建/编辑页面，传递患者ID以加载已有数据
+        // 直接携带患者信息进入方案配置页
         this.$router.push({
-          path: '/patient/create',
+          path: '/scheme/config-patient',
           query: {
-            patientId: patient.id,
-            from: 'scheme'
+            patientData: JSON.stringify(patient)
           }
         })
       } catch (error) {
@@ -545,6 +608,43 @@ export default {
   // 固定列的表头也需要背景色
   ::v-deep .el-table__fixed-right .el-table__header th {
     background-color: rgb(250, 250, 250);
+  }
+}
+
+// 下拉菜单样式
+::v-deep .el-dropdown {
+  .el-button--text {
+    padding: 0 5px;
+    margin: 0 2px;
+    font-size: 14px;
+    color: rgb(106, 91, 140);
+
+    &:hover {
+      color: rgb(96, 81, 130);
+    }
+
+    i {
+      color: rgb(106, 91, 140);
+    }
+
+    &:hover i {
+      color: rgb(96, 81, 130);
+    }
+
+    .el-icon--right {
+      margin-left: 2px;
+    }
+  }
+}
+
+::v-deep .el-dropdown-menu__item {
+  font-size: 14px;
+  padding: 8px 20px;
+  color: rgb(37, 37, 37);
+
+  &:hover {
+    background-color: #f5f7fa;
+    color: rgb(106, 91, 140);
   }
 }
 </style>

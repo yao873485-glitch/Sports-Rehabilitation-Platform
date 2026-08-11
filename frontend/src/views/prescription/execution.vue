@@ -21,7 +21,7 @@
           <label>处方状态：</label>
           <el-select v-model="queryParams.prescriptionStatus" placeholder="全部" clearable style="width: 150px;">
             <el-option label="全部" value="" />
-            <el-option label="未开始" :value="1" />
+            <el-option label="已创建" :value="1" />
             <el-option label="执行中" :value="2" />
             <el-option label="已完成" :value="3" />
             <el-option label="已结束" :value="4" />
@@ -103,7 +103,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="medicalRecordNo" label="档案号" width="180" align="center" header-align="center" />
+      <el-table-column prop="medicalRecordNumber" label="档案号" width="180" align="center" header-align="center" />
 
       <el-table-column prop="diseaseType" label="病种" width="150" align="center" header-align="center" />
 
@@ -135,6 +135,7 @@
         class-name="small-padding fixed-width"
       >
         <template slot-scope="scope">
+          <!-- 查看按钮 - 所有状态都显示 -->
           <el-button
             size="mini"
             type="text"
@@ -142,30 +143,36 @@
           >
             查看
           </el-button>
+
+          <!-- 执行中状态(2)：显示结束、执行、清单 -->
           <el-button
+            v-if="scope.row.prescriptionStatus == 2"
             size="mini"
             type="text"
-            :disabled="scope.row.prescriptionStatus === '已结束'"
             @click="handleEnd(scope.row)"
           >
             结束
           </el-button>
           <el-button
+            v-if="scope.row.prescriptionStatus == 2"
             size="mini"
             type="text"
-            :disabled="scope.row.prescriptionStatus === '已完成' || scope.row.prescriptionStatus === '已结束'"
             @click="handleExecute(scope.row)"
           >
             执行
           </el-button>
           <el-button
+            v-if="scope.row.prescriptionStatus == 2"
             size="mini"
             type="text"
-            @click="handleExecution(scope.row)"
+            @click="handleList(scope.row)"
           >
-            执行情况
+            清单
           </el-button>
+
+          <!-- 已结束状态(4)：只显示清单 -->
           <el-button
+            v-if="scope.row.prescriptionStatus == 4"
             size="mini"
             type="text"
             @click="handleList(scope.row)"
@@ -185,36 +192,6 @@
       @pagination="getList"
     />
 
-    <!-- 查看详情对话框 -->
-    <el-dialog
-      title="处方执行详情"
-      :visible.sync="detailVisible"
-      width="800px"
-      append-to-body
-    >
-      <div v-if="currentPrescription" class="prescription-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="处方名称">{{ currentPrescription.prescriptionName }}</el-descriptions-item>
-          <el-descriptions-item label="患者姓名">{{ currentPrescription.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ currentPrescription.gender }}</el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ currentPrescription.age }}岁</el-descriptions-item>
-          <el-descriptions-item label="档案号">{{ currentPrescription.medicalRecordNumber }}</el-descriptions-item>
-          <el-descriptions-item label="病种">{{ currentPrescription.diseaseType }}</el-descriptions-item>
-          <el-descriptions-item label="入组机构">{{ currentPrescription.enrollmentInstitution }}</el-descriptions-item>
-          <el-descriptions-item label="执行机构">{{ currentPrescription.executionInstitution }}</el-descriptions-item>
-          <el-descriptions-item label="处方状态">
-            <el-tag :type="getStatusType(currentPrescription.prescriptionStatus)">
-              {{ currentPrescription.prescriptionStatus }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="开方医生">{{ currentPrescription.prescribingDoctor }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间" :span="2">{{ currentPrescription.createdTime }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="detailVisible = false">关 闭</el-button>
-      </span>
-    </el-dialog>
 
     <!-- 执行情况对话框 -->
     <el-dialog
@@ -261,13 +238,15 @@
 
 <script>
 import {
-  getPrescriptionExecutionList,
-  getPrescriptionExecutionDetail,
-  endPrescriptionExecution,
-  executePrescription,
+  getPrescriptionDetail,
+  endPrescription,
+  executePrescription
+} from '@/api/prescription'
+import {
+  getPatientExercisePrescriptionList,
   getDiseaseTypes,
   getInstitutions
-} from '@/api/prescription-execution'
+} from '@/api/patient-exercise-prescription'
 
 export default {
   name: 'PrescriptionExecution',
@@ -293,27 +272,28 @@ export default {
         executionInstitution: '',
         searchKeyword: ''
       },
-      // 详情弹窗
-      detailVisible: false,
       // 执行情况弹窗
       executionVisible: false,
       currentPrescription: null
     }
   },
   created() {
-    this.getList()
+    this.loading = true
     this.getDiseaseTypes()
     this.getInstitutions()
+    this.getList()
   },
   methods: {
     /** 查询处方列表 */
     getList() {
       this.loading = true
-      getPrescriptionExecutionList(this.queryParams).then(response => {
+      getPatientExercisePrescriptionList(this.queryParams).then(response => {
         this.prescriptionList = response.data.records
         this.total = response.data.total
         this.loading = false
       }).catch(() => {
+        this.prescriptionList = []
+        this.total = 0
         this.loading = false
       })
     },
@@ -354,9 +334,13 @@ export default {
 
     /** 查看详情 */
     handleView(row) {
-      getPrescriptionExecutionDetail(row.id).then(response => {
-        this.currentPrescription = response.data
-        this.detailVisible = true
+      // 跳转到处方查看页面
+      this.$router.push({
+        path: '/prescription/view',
+        query: {
+          id: row.id,
+          patientId: row.patientId
+        }
       })
     },
 
@@ -367,35 +351,42 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        endPrescriptionExecution(row.id).then(() => {
+        endPrescription(row.id).then(() => {
           this.$message.success('处方已结束')
           this.getList()
         })
+      }).catch(() => {
+        // 用户点击取消，不做任何操作
       })
     },
 
     /** 执行处方 */
     handleExecute(row) {
-      this.$confirm('确认开始执行该处方吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'info'
-      }).then(() => {
-        executePrescription(row.id).then(() => {
-          this.$message.success('处方开始执行')
-          this.getList()
-        })
+      // 跳转到处方执行页面
+      this.$router.push({
+        path: '/prescription/execute',
+        query: {
+          id: row.id,
+          patientId: row.patientId
+        }
       })
     },
 
     /** 清单操作 */
     handleList(row) {
-      this.$message.info('清单功能正在开发中...')
+      // 跳转到处方执行清单页面
+      this.$router.push({
+        path: '/prescription/prescription-list',
+        query: {
+          patientId: row.patientId,
+          schemeId: row.medicalSchemeId || '' // 如果有方案ID则传递，否则传空
+        }
+      })
     },
 
     /** 查看执行情况 */
     handleExecution(row) {
-      getPrescriptionExecutionDetail(row.id).then(response => {
+      getPrescriptionDetail(row.id).then(response => {
         this.currentPrescription = response.data
         this.executionVisible = true
       })
@@ -417,7 +408,7 @@ export default {
     /** 获取状态文本 */
     getStatusText(status) {
       const statusMap = {
-        1: '未开始',
+        1: '已创建',
         2: '执行中',
         3: '已完成',
         4: '已结束'
@@ -439,7 +430,7 @@ export default {
     /** 获取执行进度 */
     getExecutionProgress(status) {
       const progressMap = {
-        '未开始': 0,
+        '已创建': 0,
         '创建中': 25,
         '执行中': 75,
         '已完成': 100,

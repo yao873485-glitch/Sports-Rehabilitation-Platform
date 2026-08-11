@@ -996,12 +996,75 @@
         </el-tab-pane>
       </el-tabs>
     </el-card>
+
+    <!-- 选择执行机构对话框（运动处方） -->
+    <el-dialog
+      title="选择执行机构"
+      :visible.sync="executionInstitutionDialogVisible"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form label-width="100px">
+        <el-form-item label="执行机构:">
+          <el-select
+            v-model="selectedInstitution"
+            placeholder="请选择机构"
+            style="width: 100%;"
+          >
+            <el-option label="西南医科大学附属医院" value="西南医科大学附属医院" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="executionInstitutionDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="prescriptionSaving"
+          @click="confirmSubmitPrescription"
+        >
+          确认
+        </el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 选择执行机构对话框（评定计划） -->
+    <el-dialog
+      title="选择执行机构"
+      :visible.sync="assessmentInstitutionDialogVisible"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form label-width="100px">
+        <el-form-item label="执行机构:">
+          <el-select
+            v-model="selectedAssessmentInstitution"
+            placeholder="请选择机构"
+            style="width: 100%;"
+          >
+            <el-option label="西南医科大学附属医院" value="西南医科大学附属医院" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="assessmentInstitutionDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="assessmentSaving"
+          @click="confirmSubmitAssessment"
+        >
+          确认
+        </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { createScheme, savePrescription, saveAssessment, updatePatientDiseaseType } from '@/api/medical-scheme'
-import { createFollowupPlan, createFollowupProject, getProjectCountByTemplate, enrollPatient } from '@/api/followup'
+import { enrollPatient, getFollowupPlanList } from '@/api/followup'
+import { saveSchemeCycle, getSchemeCycleByPatientId } from '@/api/scheme-cycle'
 
 export default {
   name: 'SchemeConfigPatient',
@@ -1080,6 +1143,8 @@ export default {
           remarks: ''
         }
       ],
+      assessmentInstitutionDialogVisible: false,
+      selectedAssessmentInstitution: '西南医科大学附属医院',
 
       // 随访管理相关
       followupEnabled: false,
@@ -1103,6 +1168,10 @@ export default {
 
       // 开始随访对话框
       startFollowupDialogVisible: false,
+
+      // 执行机构选择对话框
+      executionInstitutionDialogVisible: false,
+      selectedInstitution: '西南医科大学附属医院',
       followupStep: 0, // 当前步骤：0-选择开始日期，1-选择计划模板
       followupStartDate: '',
       followupTemplate: '',
@@ -1169,6 +1238,8 @@ export default {
         this.patientInfo = JSON.parse(patientData)
         // 初始化随访模板列表
         this.initFollowupTemplates()
+        // 加载已保存的方案周期配置
+        this.loadSchemeCycle()
       } catch (error) {
         console.error('解析患者信息失败:', error)
         this.$message.error('获取患者信息失败')
@@ -1209,6 +1280,31 @@ export default {
       const minutes = String(d.getMinutes()).padStart(2, '0')
       const seconds = String(d.getSeconds()).padStart(2, '0')
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+    },
+
+    /** 加载方案周期配置 */
+    async loadSchemeCycle() {
+      if (!this.patientInfo || !this.patientInfo.id) {
+        return
+      }
+
+      try {
+        const response = await getSchemeCycleByPatientId(this.patientInfo.id)
+        console.log('加载方案周期配置:', response)
+
+        if (response && response.data) {
+          // 将已保存的周期月数填充到表单中
+          this.basicForm.schemeCycle = response.data.cycleMonths
+          console.log('已加载方案周期:', response.data.cycleMonths, '个月')
+        }
+      } catch (error) {
+        // 如果是404错误，说明还没有配置，这是正常的
+        if (error.response && error.response.status === 404) {
+          console.log('患者暂无方案周期配置')
+        } else {
+          console.error('加载方案周期配置失败:', error)
+        }
+      }
     },
 
     /** 标签页切换 */
@@ -1335,20 +1431,35 @@ export default {
           // 调用后端API保存方案
           createScheme(schemeData)
             .then(response => {
-              this.$message.success('方案创建成功')
+              // 保存方案ID
+              this.schemeId = response.data
+
+              // 同时保存方案周期配置
+              const cycleData = {
+                patientId: this.patientInfo.id,
+                schemeId: this.schemeId,
+                cycleMonths: this.basicForm.schemeCycle,
+                startDate: new Date().toISOString().split('T')[0], // 当前日期作为开始日期
+                status: 1
+              }
+
+              console.log('提交的方案周期数据:', cycleData)
+
+              // 保存方案周期
+              return saveSchemeCycle(cycleData)
+            })
+            .then(() => {
+              this.$message.success('方案和周期配置保存成功')
               this.submitLoading = false
               this.basicCompleted = true
               this.isCycleModified = false
-
-              // 保存方案ID
-              this.schemeId = response.data
 
               // 自动跳转到运动处方标签页
               this.activeTab = 'prescription'
             })
             .catch(error => {
-              console.error('保存方案失败:', error)
-              this.$message.error('保存失败，请稍后重试')
+              console.error('保存失败:', error)
+              this.$message.error('保存失败: ' + (error.message || '请稍后重试'))
               this.submitLoading = false
             })
         } else {
@@ -1416,6 +1527,7 @@ export default {
         schemeId: this.schemeId,
         patientId: this.patientInfo.id,
         diseaseType: this.patientInfo.diseaseType,
+        executionInstitution: null, // 保存时执行机构为空
         exerciseList: selectedRows.map(item => ({
           exerciseScene: item.exerciseScene,
           exerciseType: item.exerciseType,
@@ -1433,13 +1545,16 @@ export default {
         }))
       }
 
-      console.log('提交的运动处方数据:', prescriptionData)
+      console.log('保存的运动处方数据:', prescriptionData)
 
       // 调用后端API保存运动处方
       savePrescription(prescriptionData)
         .then(() => {
           this.$message.success('运动处方保存成功')
           this.prescriptionSaving = false
+          // 启用评定计划标签页并跳转
+          this.assessmentEnabled = true
+          this.activeTab = 'assessment'
         })
         .catch(error => {
           console.error('保存运动处方失败:', error)
@@ -1448,7 +1563,7 @@ export default {
         })
     },
 
-    /** 提交运动处方 */
+    /** 提交运动处方 - 显示执行机构选择对话框 */
     handleSubmitPrescription() {
       // 获取选中的行
       const selectedRows = this.$refs.prescriptionTable.selection
@@ -1471,12 +1586,21 @@ export default {
         return
       }
 
+      // 显示执行机构选择对话框
+      this.executionInstitutionDialogVisible = true
+    },
+
+    /** 确认提交运动处方（选择执行机构后） */
+    confirmSubmitPrescription() {
+      const selectedRows = this.$refs.prescriptionTable.selection
+
       this.prescriptionSaving = true
 
       const prescriptionData = {
         schemeId: this.schemeId,
         patientId: this.patientInfo.id,
         diseaseType: this.patientInfo.diseaseType,
+        executionInstitution: this.selectedInstitution, // 使用选择的执行机构
         exerciseList: selectedRows.map(item => ({
           exerciseScene: item.exerciseScene,
           exerciseType: item.exerciseType,
@@ -1501,6 +1625,7 @@ export default {
         .then(() => {
           this.$message.success('运动处方提交成功')
           this.prescriptionSaving = false
+          this.executionInstitutionDialogVisible = false
           // 启用评定计划标签页并跳转
           this.assessmentEnabled = true
           this.activeTab = 'assessment'
@@ -1572,6 +1697,7 @@ export default {
         schemeId: this.schemeId,
         patientId: this.patientInfo.id,
         diseaseType: this.patientInfo.diseaseType,
+        executionInstitution: null, // 保存时设为null
         assessmentList: selectedRows.map(item => ({
           executionType: item.executionType,
           scaleName: item.scaleName,
@@ -1582,25 +1708,31 @@ export default {
         }))
       }
 
-      console.log('提交的评定计划数据:', assessmentData)
+      console.log('保存的评定计划数据:', assessmentData)
 
       // 调用后端API保存评定计划
       saveAssessment(assessmentData)
         .then(() => {
           this.$message.success('评定计划保存成功')
           this.assessmentSaving = false
+          // 保存成功后跳转到随访管理标签页
+          this.followupEnabled = true
+          this.activeTab = 'followup'
         })
         .catch(error => {
           console.error('保存评定计划失败:', error)
-          this.$message.error('保存失败，请稍后重试')
+          this.$message.error('保存失败,请稍后重试')
           this.assessmentSaving = false
         })
     },
 
     /** 提交评定计划 */
     handleSubmitAssessment() {
+      console.log('=== 点击了提交评定计划按钮 ===')
+
       // 获取选中的行
       const selectedRows = this.$refs.assessmentTable.selection
+      console.log('选中的行:', selectedRows)
 
       // 验证是否至少选中一条记录
       if (!selectedRows || selectedRows.length === 0) {
@@ -1618,12 +1750,23 @@ export default {
         return
       }
 
+      console.log('即将显示执行机构选择弹窗')
+      // 显示执行机构选择弹窗
+      this.assessmentInstitutionDialogVisible = true
+      console.log('assessmentInstitutionDialogVisible 已设置为 true')
+    },
+
+    /** 确认提交评定计划（选择执行机构后） */
+    confirmSubmitAssessment() {
+      const selectedRows = this.$refs.assessmentTable.selection
+
       this.assessmentSaving = true
 
       const assessmentData = {
         schemeId: this.schemeId,
         patientId: this.patientInfo.id,
         diseaseType: this.patientInfo.diseaseType,
+        executionInstitution: this.selectedAssessmentInstitution, // 使用选择的执行机构
         assessmentList: selectedRows.map(item => ({
           executionType: item.executionType,
           scaleName: item.scaleName,
@@ -1641,8 +1784,9 @@ export default {
         .then(() => {
           this.$message.success('评定计划提交成功')
           this.assessmentSaving = false
+          this.assessmentInstitutionDialogVisible = false
 
-          // 初始化随访数据（计划名称为空，等待后续添加）
+          // 初始化随访数据（计划名称为空,等待后续添加）
           this.followupPlanName = ''
           this.followupData.applicationTime = this.formatDate(new Date())
           this.followupData.joinProjectTime = this.formatDate(new Date())
@@ -1657,31 +1801,45 @@ export default {
         })
         .catch(error => {
           console.error('提交评定计划失败:', error)
-          this.$message.error('提交失败，请稍后重试')
+          this.$message.error('提交失败,请稍后重试')
           this.assessmentSaving = false
+          this.assessmentInstitutionDialogVisible = false
         })
     },
 
-    /** 初始化随访模板列表 */
-    initFollowupTemplates() {
-      // 根据患者的病种和入组机构生成模板列表
-      const institution = this.patientInfo.enrollmentInstitution || '默认机构'
-      const diseaseType = this.patientInfo.diseaseType || '疾病'
-
-      this.followupTemplateList = [
-        {
-          label: `(${institution})${diseaseType}患者运动与健康随访计划`,
-          value: `${institution}_${diseaseType}_运动与健康随访计划`
-        },
-        {
-          label: `(华阳街道龙腾社区卫生服务中心)骨关节炎患者运动与健康随访计划`,
-          value: '华阳街道龙腾社区卫生服务中心_骨关节炎_运动与健康随访计划'
-        },
-        {
-          label: `(江安县中医医院)骨关节炎患者运动与健康随访计划`,
-          value: '江安县中医医院_骨关节炎_运动与健康随访计划'
+    /** 初始化随访模板列表 - 从数据库加载 */
+    async initFollowupTemplates() {
+      try {
+        console.log('===== 开始加载随访计划模板 =====')
+        // 从数据库加载随访计划列表
+        const params = {
+          pageNum: 1,
+          pageSize: 100
+          // 不限制status，加载所有计划
         }
-      ]
+
+        const response = await getFollowupPlanList(params)
+        console.log('随访计划API响应:', response)
+
+        if (response && response.data && response.data.records) {
+          // 将数据库中的计划转换为下拉框选项
+          this.followupTemplateList = response.data.records.map(plan => ({
+            label: plan.planName,
+            value: plan.id,
+            planData: plan // 保存完整的计划数据，供后续使用
+          }))
+
+          console.log('加载的模板数量:', this.followupTemplateList.length)
+          console.log('模板列表:', this.followupTemplateList)
+        } else {
+          console.warn('随访计划数据格式异常:', response)
+          this.followupTemplateList = []
+        }
+      } catch (error) {
+        console.error('加载随访计划模板失败:', error)
+        this.$message.error('加载随访计划模板失败')
+        this.followupTemplateList = []
+      }
     },
 
     /** 开始随访 */
@@ -1722,31 +1880,31 @@ export default {
           // 获取模板信息
           const templateInfo = this.followupTemplateList.find(t => t.value === this.followupTemplate)
           const templateName = templateInfo ? templateInfo.label : this.followupTemplate
+          const planData = templateInfo ? templateInfo.planData : null
 
-          // 1. 获取该模板已有的项目数量，计算递增数字
-          const countResult = await getProjectCountByTemplate(templateName)
-          const count = countResult.data || 0
-          const nextNumber = count + 1
-
-          // 2. 生成随机项目编号
-          const projectCode = 'PRJ-' + Date.now() + '-' + Math.random().toString(36).substring(2, 11).toUpperCase()
-
-          // 3. 创建随访项目
-          const projectData = {
-            projectCode: projectCode,
-            projectName: `具体·${templateName}+${nextNumber}`,
-            projectDescription: '-',
-            linkedFollowupPlan: '-',
-            isPublished: 1,
-            operator: '系统'
+          // 调用入组接口，插入随访患者列表
+          // 不传时间字段，让后端自动设置为当前时间
+          const enrollmentData = {
+            patientId: this.patientInfo.id,
+            followupPlanId: this.createdPlanId,
+            followupPlanName: templateName,
+            followupProjectName: planData ? planData.linkedProjectName : '',
+            followupTeam: planData ? planData.availableTeam : '',
+            primaryDoctor: this.patientInfo.primaryDoctor || '',
+            healthManager: '',
+            followupStatus: '随访中',
+            source: '医生推荐',
+            createdBy: '系统'
           }
 
-          await createFollowupProject(projectData)
+          console.log('准备入组，数据：', enrollmentData)
+          const result = await enrollPatient(enrollmentData)
+          console.log('入组成功，返回ID：', result)
 
-          this.$message.success('随访项目创建成功')
+          this.$message.success('随访计划已选择，患者入组成功')
 
           // 更新计划名称
-          this.followupPlanName = projectData.projectName
+          this.followupPlanName = templateName
 
           // 初始化随访任务列表
           this.initFollowupTasks()
@@ -1755,43 +1913,30 @@ export default {
           this.startFollowupDialogVisible = false
           this.showFollowupPlan = true
         } catch (error) {
-          console.error('创建随访项目失败:', error)
-          this.$message.error('创建失败，请重试')
+          console.error('患者入组失败:', error)
+          this.$message.error('入组失败，请重试')
         }
       }
     },
 
-    /** 模板选择改变时，自动创建随访计划 */
-    async handleTemplateChange(templateValue) {
+    /** 模板选择改变时，记录选择的计划ID */
+    handleTemplateChange(templateValue) {
       if (!templateValue) {
+        this.createdPlanId = null
         return
       }
 
-      try {
-        // 获取模板信息
-        const templateInfo = this.followupTemplateList.find(t => t.value === templateValue)
-        const templateName = templateInfo ? templateInfo.label : templateValue
+      // 获取选中的计划信息
+      const templateInfo = this.followupTemplateList.find(t => t.value === templateValue)
 
-        // 创建随访计划
-        const planData = {
-          planName: `具体·${templateName}`,
-          templateName: templateName,
-          linkedProject: this.patientInfo.name || '-',
-          versionNumber: '1.0',
-          status: '未开始',
-          versionRemark: '-'
-        }
-
-        const planResult = await createFollowupPlan(planData)
-        this.createdPlanId = planResult.data
-
-        this.$message.success('随访计划创建成功')
-      } catch (error) {
-        console.error('创建随访计划失败:', error)
-        this.$message.error('创建随访计划失败，请重试')
-        // 清空选择，允许重新选择
-        this.followupTemplate = ''
+      if (templateInfo) {
+        // 直接使用数据库中已有的计划ID
+        this.createdPlanId = templateInfo.value
+        console.log('选择的随访计划ID:', this.createdPlanId)
+        console.log('选择的随访计划名称:', templateInfo.label)
+      } else {
         this.createdPlanId = null
+        console.warn('未找到对应的计划模板')
       }
     },
 

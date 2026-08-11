@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.PatientAssessmentPlanMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="PatientAssessmentPlanVOMap" type="com.rehabilitation.dto.PatientAssessmentPlanVO">
+        <id column="id" property="id"/>
+        <result column="assessment_name" property="assessmentName"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="gender" property="gender"/>
+        <result column="age" property="age"/>
+        <result column="medical_record_number" property="medicalRecordNumber"/>
+        <result column="disease_type" property="diseaseType"/>
+        <result column="enrollment_institution" property="enrollmentInstitution"/>
+        <result column="execution_institution" property="executionInstitution"/>
+        <result column="status" property="status"/>
+        <result column="prescribing_doctor" property="prescribingDoctor"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="birth_date" property="birthDate"/>
+    </resultMap>
+
+    <!-- 分页查询患者评定方案列表 -->
+    <select id="selectPatientAssessmentPlanPage" resultMap="PatientAssessmentPlanVOMap">
+        SELECT
+            pap.id,
+            pap.assessment_name,
+            p.name as patient_name,
+            p.gender,
+            TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age,
+            p.medical_record_no as medical_record_number,
+            p.disease_type,
+            p.enrollment_institution,
+            pap.execution_institution,
+            pap.status,
+            pap.prescribing_doctor,
+            pap.created_time,
+            pap.updated_time,
+            p.birth_date
+        FROM patient_assessment_plan pap
+        LEFT JOIN patient p ON pap.patient_id = p.id
+        <where>
+            <if test="query.patientId != null">
+                AND pap.patient_id = #{query.patientId}
+            </if>
+            <if test="query.diseaseType != null and query.diseaseType != ''">
+                AND p.disease_type = #{query.diseaseType}
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND pap.status = #{query.status}
+            </if>
+            <if test="query.enrollmentInstitution != null and query.enrollmentInstitution != ''">
+                AND p.enrollment_institution = #{query.enrollmentInstitution}
+            </if>
+            <if test="query.prescribingDoctor != null and query.prescribingDoctor != ''">
+                AND pap.prescribing_doctor LIKE CONCAT('%', #{query.prescribingDoctor}, '%')
+            </if>
+            <if test="query.searchKeyword != null and query.searchKeyword != ''">
+                AND (
+                    p.name LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                    OR p.medical_record_no LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY pap.created_time DESC
+    </select>
+
+    <!-- 根据ID查询患者评定方案详情 -->
+    <select id="selectPatientAssessmentPlanById" resultMap="PatientAssessmentPlanVOMap">
+        SELECT
+            pap.id,
+            pap.assessment_name,
+            p.name as patient_name,
+            p.gender,
+            TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age,
+            p.medical_record_no as medical_record_number,
+            p.disease_type,
+            p.enrollment_institution,
+            pap.execution_institution,
+            pap.status,
+            pap.prescribing_doctor,
+            pap.created_time,
+            pap.updated_time
+        FROM patient_assessment_plan pap
+        LEFT JOIN patient p ON pap.patient_id = p.id
+        WHERE pap.id = #{id}
+    </select>
+
+    <!-- 结果映射 - 评定计划详情VO -->
+    <resultMap id="AssessmentPlanDetailVOMap" type="com.rehabilitation.dto.AssessmentPlanDetailVO">
+        <!-- 主键必须在前面 -->
+        <id column="id" property="id"/>
+        <!-- 患者信息 -->
+        <result column="patient_name" property="patientName"/>
+        <result column="id_card" property="idCard"/>
+        <result column="medical_record_no" property="medicalRecordNo"/>
+        <result column="birth_date" property="birthDate"/>
+        <result column="diagnosis" property="diagnosis"/>
+        <result column="disease_type" property="diseaseType"/>
+        <!-- 评定计划信息 -->
+        <result column="patient_id" property="patientId"/>
+        <result column="assessment_name" property="assessmentName"/>
+        <result column="execution_type" property="executionType"/>
+        <result column="scale_name" property="scaleName"/>
+        <result column="execution_frequency" property="executionFrequency"/>
+        <result column="cycle_duration" property="cycleDuration"/>
+        <result column="total_times" property="totalTimes"/>
+        <result column="remarks" property="remarks"/>
+        <result column="execution_institution" property="executionInstitution"/>
+        <result column="status" property="status"/>
+        <result column="prescribing_doctor" property="prescribingDoctor"/>
+    </resultMap>
+
+    <!-- 根据评定计划ID查询完整详情（包含患者信息） -->
+    <select id="selectAssessmentPlanDetailById" resultMap="AssessmentPlanDetailVOMap">
+        SELECT
+            p.name as patient_name,
+            p.id_card,
+            p.medical_record_no,
+            p.birth_date,
+            pd.diagnosis as diagnosis,
+            p.disease_type,
+            pap.id,
+            pap.patient_id,
+            pap.assessment_name,
+            pap.execution_type,
+            pap.scale_name,
+            pap.execution_frequency,
+            pap.cycle_duration,
+            pap.total_times,
+            pap.remarks,
+            pap.execution_institution,
+            pap.status,
+            pap.prescribing_doctor
+        FROM patient_assessment_plan pap
+        LEFT JOIN patient p ON pap.patient_id = p.id
+        LEFT JOIN patient_detail pd ON pd.patient_id = p.id
+        WHERE pap.id = #{id}
+    </select>
+
+</mapper>

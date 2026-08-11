@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.DiseaseRecordMapper">
+
+    <!-- 根据患者ID查询专病档案 -->
+    <select id="selectByPatientId" resultType="com.rehabilitation.entity.DiseaseRecord">
+        SELECT * FROM disease_record WHERE patient_id = #{patientId}
+    </select>
+
+    <!-- 根据患者ID删除专病档案 -->
+    <delete id="deleteByPatientId">
+        DELETE FROM disease_record WHERE patient_id = #{patientId}
+    </delete>
+
+</mapper>

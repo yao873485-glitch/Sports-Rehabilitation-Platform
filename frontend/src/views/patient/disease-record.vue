@@ -1,67 +1,96 @@
 <template>
   <div class="app-container">
-    <el-card>
-      <div slot="header" class="clearfix">
-        <span style="font-size: 18px; font-weight: 600;">专病档案</span>
-        <el-button style="float: right;" type="text" icon="el-icon-back" @click="handleBack">返回</el-button>
-      </div>
+    <!-- 专病档案弹窗 -->
+    <disease-record-dialog
+      :visible.sync="diseaseRecordDialogVisible"
+      :patient-id="patientId"
+      @saved="handleDiseaseRecordSaved"
+    />
 
-      <el-alert
-        title="功能开发中"
-        type="info"
-        description="专病档案填写功能正在开发中，敬请期待..."
-        :closable="false"
-        show-icon
-        style="margin-bottom: 20px;"
-      />
-
-      <!-- 患者基本信息展示 -->
-      <el-descriptions v-if="patientData" title="患者基本信息" :column="2" border>
-        <el-descriptions-item label="姓名">{{ patientData.name }}</el-descriptions-item>
-        <el-descriptions-item label="性别">{{ patientData.gender }}</el-descriptions-item>
-        <el-descriptions-item label="联系电话">{{ patientData.phone }}</el-descriptions-item>
-        <el-descriptions-item label="证件类型">{{ patientData.idCardType }}</el-descriptions-item>
-        <el-descriptions-item label="证件号">{{ patientData.idCard }}</el-descriptions-item>
-        <el-descriptions-item label="身高">{{ patientData.height }}cm</el-descriptions-item>
-        <el-descriptions-item label="出生年月">{{ patientData.birthDate }}</el-descriptions-item>
-        <el-descriptions-item label="民族">{{ patientData.ethnicity }}</el-descriptions-item>
-        <el-descriptions-item label="病种类型">{{ patientData.diseaseType }}</el-descriptions-item>
-      </el-descriptions>
-
-      <!-- 操作按钮 -->
-      <div style="text-align: center; margin-top: 30px;">
-        <el-button @click="handleBack">返回</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
-      </div>
-    </el-card>
+    <!-- 入组评估弹窗 -->
+    <enrollment-assessment-dialog
+      :visible.sync="enrollmentAssessmentDialogVisible"
+      :patient-id="patientId"
+      @saved="handleEnrollmentAssessmentSaved"
+    />
   </div>
 </template>
 
 <script>
+import DiseaseRecordDialog from './components/DiseaseRecordDialog.vue'
+import EnrollmentAssessmentDialog from './components/EnrollmentAssessmentDialog.vue'
+
 export default {
   name: 'DiseaseRecord',
+  components: {
+    DiseaseRecordDialog,
+    EnrollmentAssessmentDialog
+  },
   data() {
     return {
-      patientData: null
+      patientId: null,
+      diseaseRecordDialogVisible: false,
+      enrollmentAssessmentDialogVisible: false
     }
   },
   created() {
-    // 从路由参数中获取患者数据
-    if (this.$route.query.patientData) {
+    // 从路由参数中获取患者ID
+    // 可能是直接的 patientId，也可能在 patientData 对象中
+    if (this.$route.query.patientId) {
+      this.patientId = parseInt(this.$route.query.patientId)
+    } else if (this.$route.query.patientData) {
       try {
-        this.patientData = JSON.parse(this.$route.query.patientData)
+        const patientData = JSON.parse(this.$route.query.patientData)
+        this.patientId = patientData.id || patientData.patientId
+        console.log('从 patientData 解析患者信息:', patientData)
       } catch (e) {
-        console.error('解析患者数据失败:', e)
+        console.error('解析 patientData 失败:', e)
+      }
+    }
+
+    console.log('专病档案页面 - 患者ID:', this.patientId)
+
+    if (!this.patientId || isNaN(this.patientId)) {
+      this.$message.error('无法获取患者ID，请重新进入')
+      this.$router.back()
+      return
+    }
+
+    // 自动打开弹窗
+    this.$nextTick(() => {
+      this.diseaseRecordDialogVisible = true
+    })
+  },
+  watch: {
+    // 监听弹窗关闭事件，关闭时返回上一页
+    diseaseRecordDialogVisible(val) {
+      if (!val) {
+        // 如果有来源页面和标签页信息，返回到指定标签页
+        if (this.$route.query.from === 'create' && this.$route.query.activeTab) {
+          this.$router.push({
+            path: '/patient/create',
+            query: {
+              patientId: this.$route.query.patientId,
+              mode: this.$route.query.mode,
+              activeTab: this.$route.query.activeTab
+            }
+          })
+        } else {
+          this.$router.back()
+        }
       }
     }
   },
   methods: {
-    handleBack() {
-      this.$router.back()
+    handleDiseaseRecordSaved() {
+      this.$message.success('专病档案保存成功')
+      // 关闭弹窗，触发 watch 中的导航逻辑
+      this.diseaseRecordDialogVisible = false
     },
-    handleSave() {
-      this.$message.success('保存成功')
-      this.handleBack()
+    handleEnrollmentAssessmentSaved() {
+      this.$message.success('入组评估保存成功')
+      // 关闭弹窗，触发 watch 中的导航逻辑
+      this.enrollmentAssessmentDialogVisible = false
     }
   }
 }
@@ -70,15 +99,5 @@ export default {
 <style lang="scss" scoped>
 .app-container {
   padding: 20px;
-}
-
-.clearfix:before,
-.clearfix:after {
-  display: table;
-  content: "";
-}
-
-.clearfix:after {
-  clear: both;
 }
 </style>

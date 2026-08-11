@@ -45,7 +45,13 @@
             </el-form-item>
 
             <el-form-item label="证件号" prop="idCard">
-              <el-input v-model="basicForm.idCard" placeholder="请输入证件号" :disabled="isReadonly" clearable />
+              <el-input
+                v-model="basicForm.idCard"
+                placeholder="请输入证件号"
+                :disabled="isReadonly"
+                clearable
+                @input="handleIdCardChange"
+              />
             </el-form-item>
 
             <el-form-item label="性别" prop="gender">
@@ -75,6 +81,7 @@
                 prefix-icon="el-icon-date"
                 :disabled="isReadonly"
                 style="width: 100%;"
+                @change="handleBirthDateChange"
               />
             </el-form-item>
 
@@ -236,74 +243,69 @@
               </el-select>
             </el-form-item>
 
-            <!-- 新建模式下显示的额外字段 -->
-            <template v-if="!isEditMode">
-              <el-form-item label="诊断" prop="diagnosis">
-                <el-select
-                  v-model="enrollmentForm.diagnosis"
-                  filterable
-                  remote
-                  reserve-keyword
-                  placeholder="请输入关键字搜索"
-                  :remote-method="searchDiagnosis"
-                  :loading="diagnosisLoading"
-                  style="width: 100%;"
-                >
-                  <el-option
-                    v-for="item in diagnosisList"
-                    :key="item"
-                    :label="item"
-                    :value="item"
-                  />
-                </el-select>
-              </el-form-item>
-
-              <el-form-item label="入组机构" prop="enrollmentInstitution">
-                <el-input
-                  v-model="enrollmentForm.enrollmentInstitution"
-                  placeholder="请输入入组机构"
-                  clearable
+            <el-form-item label="诊断" prop="diagnosis">
+              <el-select
+                v-model="enrollmentForm.diagnosis"
+                filterable
+                remote
+                reserve-keyword
+                placeholder="请输入关键字搜索"
+                :remote-method="searchDiagnosis"
+                :loading="diagnosisLoading"
+                :disabled="isReadonly"
+                style="width: 100%;"
+              >
+                <el-option
+                  v-for="item in diagnosisList"
+                  :key="item"
+                  :label="item"
+                  :value="item"
                 />
-              </el-form-item>
-            </template>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="入组机构" prop="enrollmentInstitution">
+              <el-input
+                v-model="enrollmentForm.enrollmentInstitution"
+                placeholder="请输入入组机构"
+                :disabled="isReadonly"
+                clearable
+              />
+            </el-form-item>
 
             <!-- 档案填写入口 -->
-            <el-divider content-position="left">档案信息</el-divider>
-            <div class="file-entry-container">
-              <div class="file-entry-item">
-                <span class="file-entry-label">健康档案</span>
-                <el-button
-                  type="primary"
-                  size="small"
-                  class="custom-primary-btn"
-                  @click="handleFillHealthRecord"
-                >
-                  {{ isReadonly ? '查看' : '填写' }}
-                </el-button>
-              </div>
-              <div class="file-entry-item">
-                <span class="file-entry-label">专病档案</span>
-                <el-button
-                  type="primary"
-                  size="small"
-                  style="background-color: #9b59d6; border-color: #9b59d6;"
-                  @click="handleFillDiseaseRecord"
-                >
-                  {{ isReadonly ? '查看' : '填写' }}
-                </el-button>
-              </div>
-              <div class="file-entry-item">
-                <span class="file-entry-label">入组评估</span>
-                <el-button
-                  type="primary"
-                  size="small"
-                  style="background-color: #9b59d6; border-color: #9b59d6;"
-                  @click="handleFillEnrollmentAssessment"
-                >
-                  {{ isReadonly ? '查看' : '填写' }}
-                </el-button>
-              </div>
-            </div>
+            <el-form-item label="健康档案">
+              <el-button
+                type="primary"
+                size="small"
+                class="custom-primary-btn"
+                @click="handleFillHealthRecord"
+              >
+                {{ isReadonly ? '查看' : '填写' }}
+              </el-button>
+            </el-form-item>
+
+            <el-form-item label="专病档案">
+              <el-button
+                type="primary"
+                size="small"
+                style="background-color: #9b59d6; border-color: #9b59d6;"
+                @click="handleFillDiseaseRecord"
+              >
+                {{ isReadonly ? '查看' : '填写' }}
+              </el-button>
+            </el-form-item>
+
+            <el-form-item label="入组评估">
+              <el-button
+                type="primary"
+                size="small"
+                style="background-color: #9b59d6; border-color: #9b59d6;"
+                @click="handleFillEnrollmentAssessment"
+              >
+                {{ isReadonly ? '查看' : '填写' }}
+              </el-button>
+            </el-form-item>
 
             <!-- 操作按钮 -->
             <el-form-item>
@@ -317,15 +319,48 @@
         </el-tab-pane>
       </el-tabs>
     </el-card>
+
+    <!-- 健康档案弹窗 -->
+    <health-record-dialog
+      :visible.sync="healthRecordDialogVisible"
+      :patient-data="{ ...basicForm, ...enrollmentForm }"
+      :patient-id="patientId"
+      :readonly="isReadonly"
+      @saved="handleHealthRecordSaved"
+    />
+
+    <!-- 入组评估弹窗 -->
+    <enrollment-assessment-dialog
+      :visible.sync="enrollmentAssessmentDialogVisible"
+      :patient-id="patientId"
+      :readonly="isReadonly"
+      @saved="handleEnrollmentAssessmentSaved"
+    />
+
+    <!-- 专病档案弹窗 -->
+    <disease-record-dialog
+      :visible.sync="diseaseRecordDialogVisible"
+      :patient-id="patientId"
+      :readonly="isReadonly"
+      @saved="handleDiseaseRecordSaved"
+    />
   </div>
 </template>
 
 <script>
 import { addPatient, getPatientDetail, savePatientDetail, updatePatient } from '@/api/patient'
 import { chinaRegionData } from '@/utils/china-region-data'
+import HealthRecordDialog from './components/HealthRecordDialog.vue'
+import EnrollmentAssessmentDialog from './components/EnrollmentAssessmentDialog.vue'
+import DiseaseRecordDialog from './components/DiseaseRecordDialog.vue'
 
 export default {
   name: 'PatientCreate',
+  components: {
+    HealthRecordDialog,
+    EnrollmentAssessmentDialog,
+    DiseaseRecordDialog
+  },
   data() {
     // 手机号验证规则
     const validatePhone = (rule, value, callback) => {
@@ -338,6 +373,34 @@ export default {
       }
     }
 
+    // 身份证号验证规则
+    const validateIdCard = (rule, value, callback) => {
+      if (!value) {
+        callback()
+        return
+      }
+
+      // 如果已经填写了出生年月，需要验证身份证是否匹配
+      if (this.basicForm.birthDate && value.length === 18) {
+        const birthFromId = this.extractBirthDateFromIdCard(value)
+        if (birthFromId && birthFromId !== this.basicForm.birthDate) {
+          callback(new Error('请输入正确的身份证号码'))
+          return
+        }
+      }
+
+      // 验证身份证格式
+      if (value.length === 18) {
+        const reg = /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/
+        if (!reg.test(value)) {
+          callback(new Error('请输入正确的身份证号码'))
+          return
+        }
+      }
+
+      callback()
+    }
+
     return {
       activeTab: 'basic',
       basicFormCompleted: false,
@@ -348,6 +411,9 @@ export default {
       isEditMode: false, // 是否为编辑模式
       isReadonly: false, // 是否为只读模式
       displayMedicalRecordNo: '', // 显示的档案号
+      healthRecordDialogVisible: false, // 健康档案弹窗显示状态
+      enrollmentAssessmentDialogVisible: false, // 入组评估弹窗显示状态
+      diseaseRecordDialogVisible: false, // 专病档案弹窗显示状态
 
       // 基本信息表单
       basicForm: {
@@ -378,7 +444,8 @@ export default {
           { required: true, message: '请选择证件类型', trigger: 'change' }
         ],
         idCard: [
-          { required: true, message: '请输入证件号', trigger: 'blur' }
+          { required: true, message: '请输入证件号', trigger: 'blur' },
+          { validator: validateIdCard, trigger: 'blur' }
         ],
         gender: [
           { required: true, message: '请选择性别', trigger: 'change' }
@@ -447,6 +514,7 @@ export default {
     // 检查是否有患者ID参数（编辑模式或查看模式）
     const patientId = this.$route.query.patientId
     const mode = this.$route.query.mode
+    const activeTab = this.$route.query.activeTab
 
     if (patientId) {
       this.patientId = parseInt(patientId)
@@ -462,8 +530,58 @@ export default {
 
       this.loadPatientData()
     }
+
+    // 如果有 activeTab 参数，切换到对应标签页
+    if (activeTab) {
+      this.activeTab = activeTab
+    }
   },
   methods: {
+    /**
+     * 从身份证号提取出生日期
+     */
+    extractBirthDateFromIdCard(idCard) {
+      if (!idCard || idCard.length !== 18) {
+        return null
+      }
+      const year = idCard.substring(6, 10)
+      const month = idCard.substring(10, 12)
+      const day = idCard.substring(12, 14)
+      return `${year}-${month}-${day}`
+    },
+
+    /**
+     * 处理证件号变化
+     */
+    handleIdCardChange(value) {
+      if (!value || value.length !== 18) {
+        return
+      }
+
+      // 从身份证号提取出生日期
+      const birthDate = this.extractBirthDateFromIdCard(value)
+      if (birthDate) {
+        this.basicForm.birthDate = birthDate
+      }
+
+      // 触发表单验证
+      this.$nextTick(() => {
+        this.$refs.basicFormRef.validateField('idCard')
+      })
+    },
+
+    /**
+     * 处理出生日期变化
+     */
+    handleBirthDateChange() {
+      // 如果已经填写了身份证号，触发验证
+      if (this.basicForm.idCard) {
+        this.$nextTick(() => {
+          this.$refs.basicFormRef.validateField('idCard')
+        })
+      }
+    },
+
     /**
      * 解析省市区字符串为数组
      * 例如："河北省秦皇岛市北戴河区" -> ["河北省", "秦皇岛市", "北戴河区"]
@@ -480,11 +598,24 @@ export default {
       const isDirectMunicipality = directMunicipalities.some(city => remaining.startsWith(city))
 
       if (isDirectMunicipality) {
-        // 直辖市：第一级和第二级都是市
+        // 直辖市：第一级是市，第二级多为“市辖区/县”
         const cityName = remaining.substring(0, 3) // "北京市"
         result.push(cityName)
-        result.push(cityName) // 直辖市的省级和市级都用同一个名称
         remaining = remaining.substring(3)
+
+        let cityLevel = ''
+        if (remaining.startsWith('市辖区')) {
+          cityLevel = '市辖区'
+          remaining = remaining.substring(3)
+        } else if (remaining.startsWith('县')) {
+          cityLevel = '县'
+          remaining = remaining.substring(1)
+        } else if (remaining.endsWith('县')) {
+          cityLevel = '县'
+        } else {
+          cityLevel = '市辖区'
+        }
+        result.push(cityLevel)
       } else {
         // 普通省份
         const provinceMatch = remaining.match(/^(.+?(?:省|自治区))/)
@@ -552,6 +683,9 @@ export default {
 
           // 填充详细地址
           this.basicForm.detailAddress = detailInfo.detailAddress || ''
+
+          // 填充诊断信息（从patient_detail表）
+          this.enrollmentForm.diagnosis = detailInfo.diagnosis || ''
 
           // 填充备注说明
           this.basicForm.remarks = detailInfo.remark || ''
@@ -735,6 +869,7 @@ export default {
             ? this.basicForm.contactAddress.join('')
             : this.basicForm.contactAddress,
           detailAddress: this.basicForm.detailAddress || '',
+          diagnosis: this.enrollmentForm.diagnosis || '',
           remark: this.basicForm.remarks || ''
         }
 
@@ -743,6 +878,11 @@ export default {
         // 2. 更新patient表的入组信息
         const basicData = {
           id: this.patientId,
+          name: this.basicForm.name,
+          phone: this.basicForm.phone,
+          idCard: this.basicForm.idCard,
+          gender: this.basicForm.gender,
+          birthDate: this.basicForm.birthDate,
           diseaseType: this.enrollmentForm.diseaseType,
           enrollmentInstitution: this.enrollmentForm.enrollmentInstitution
         }
@@ -795,71 +935,243 @@ export default {
     },
 
     /** 填写健康档案 */
-    handleFillHealthRecord() {
-      // 合并基本信息和入组信息
-      const patientData = {
-        ...this.basicForm,
-        ...this.enrollmentForm
+    async handleFillHealthRecord() {
+      console.log('点击填写健康档案按钮，当前 patientId:', this.patientId)
+
+      // 如果是只读模式或已有患者ID，直接打开弹窗
+      if (this.isReadonly || this.patientId) {
+        console.log('直接打开弹窗，patientId:', this.patientId)
+        this.healthRecordDialogVisible = true
+        console.log('healthRecordDialogVisible 设置为:', this.healthRecordDialogVisible)
+        return
       }
-      // 跳转到健康档案填写页面
-      const query = {
-        from: 'create',
-        patientData: JSON.stringify(patientData)
+
+      // 新建模式：需要先保存患者信息获取 patientId
+      // 1. 验证基本信息
+      const basicValid = await this.$refs.basicForm.validate().catch(() => false)
+      if (!basicValid) {
+        this.$message.error('请先完善患者基本信息')
+        this.activeTab = 'basic'
+        return
       }
-      // 如果是只读模式，添加 mode 参数
-      if (this.isReadonly) {
-        query.mode = 'view'
-        query.patientId = this.patientId
+
+      // 2. 验证入组信息
+      const enrollmentValid = await this.$refs.enrollmentForm.validate().catch(() => false)
+      if (!enrollmentValid) {
+        this.$message.error('请先完善入组信息')
+        return
       }
-      this.$router.push({
-        path: '/patient/health-record',
-        query
-      })
+
+      // 3. 保存患者信息
+      this.submitLoading = true
+      try {
+        // 合并表单数据
+        const patientData = {
+          ...this.basicForm,
+          ...this.enrollmentForm
+        }
+
+        // 处理联系地址：将数组转换为字符串
+        if (Array.isArray(patientData.contactAddress)) {
+          patientData.contactAddress = patientData.contactAddress.join('')
+        }
+
+        // 确保detailAddress和remarks字段被包含
+        patientData.detailAddress = this.basicForm.detailAddress || ''
+        patientData.remarks = this.basicForm.remarks || ''
+
+        console.log('准备保存患者信息:', patientData)
+
+        // 调用后端API保存患者信息
+        const response = await addPatient(patientData)
+        const savedPatientInfo = response.data || {}
+
+        console.log('患者信息保存成功，返回数据:', savedPatientInfo)
+
+        // 保存患者ID
+        this.patientId = savedPatientInfo.id
+        this.isEditMode = true
+
+        console.log('设置 patientId 为:', this.patientId)
+
+        this.$message.success('患者信息已保存')
+        this.submitLoading = false
+
+        // 打开健康档案弹窗
+        console.log('准备打开健康档案弹窗')
+        this.healthRecordDialogVisible = true
+        console.log('healthRecordDialogVisible 设置为:', this.healthRecordDialogVisible)
+
+        // 使用 nextTick 确保 DOM 更新后再检查
+        this.$nextTick(() => {
+          console.log('nextTick: healthRecordDialogVisible =', this.healthRecordDialogVisible)
+          console.log('nextTick: patientId =', this.patientId)
+        })
+      } catch (error) {
+        console.error('保存患者信息失败:', error)
+        this.$message.error('保存失败，请稍后重试')
+        this.submitLoading = false
+      }
+    },
+
+    /** 健康档案保存成功回调 */
+    handleHealthRecordSaved() {
+      this.$message.success('健康档案保存成功')
+      this.healthRecordDialogVisible = false
+    },
+
+    /** 入组评估保存成功回调 */
+    handleEnrollmentAssessmentSaved() {
+      this.$message.success('入组评估保存成功')
+      this.enrollmentAssessmentDialogVisible = false
     },
 
     /** 填写专病档案 */
-    handleFillDiseaseRecord() {
-      // 合并基本信息和入组信息
-      const patientData = {
-        ...this.basicForm,
-        ...this.enrollmentForm
+    async handleFillDiseaseRecord() {
+      // 如果是只读模式或已有患者ID，直接打开弹窗
+      if (this.isReadonly || this.patientId) {
+        this.diseaseRecordDialogVisible = true
+        return
       }
-      // 跳转到专病档案填写页面
-      const query = {
-        from: 'create',
-        patientData: JSON.stringify(patientData)
-      }
-      // 如果是只读模式，添加 mode 参数
-      if (this.isReadonly) {
-        query.mode = 'view'
-        query.patientId = this.patientId
-      }
-      this.$router.push({
-        path: '/patient/disease-record',
-        query
+
+      // 如果是新建模式，需要先保存患者信息
+      this.$confirm('需要先保存患者信息才能填写专病档案，是否立即保存？', '提示', {
+        confirmButtonText: '保存并继续',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        // 1. 验证基本信息
+        const basicValid = await this.$refs.basicForm.validate().catch(() => false)
+        if (!basicValid) {
+          this.$message.error('请先完善患者基本信息')
+          this.activeTab = 'basic'
+          return
+        }
+
+        // 2. 验证入组信息
+        const enrollmentValid = await this.$refs.enrollmentForm.validate().catch(() => false)
+        if (!enrollmentValid) {
+          this.$message.error('请先完善入组信息')
+          return
+        }
+
+        // 3. 保存患者信息
+        this.submitLoading = true
+        try {
+          // 合并表单数据
+          const patientData = {
+            ...this.basicForm,
+            ...this.enrollmentForm
+          }
+
+          // 处理联系地址：将数组转换为字符串
+          if (Array.isArray(patientData.contactAddress)) {
+            patientData.contactAddress = patientData.contactAddress.join('')
+          }
+
+          // 确保detailAddress和remarks字段被包含
+          patientData.detailAddress = this.basicForm.detailAddress || ''
+          patientData.remarks = this.basicForm.remarks || ''
+
+          console.log('准备保存患者信息:', patientData)
+
+          // 调用后端API保存患者信息
+          const response = await addPatient(patientData)
+          const savedPatientInfo = response.data || response || {}
+
+          console.log('患者信息保存成功，返回数据:', savedPatientInfo)
+
+          // 保存患者ID
+          this.patientId = savedPatientInfo.id
+          this.isEditMode = true
+
+          console.log('设置 patientId 为:', this.patientId)
+
+          this.$message.success('患者信息已保存')
+          this.submitLoading = false
+
+          // 打开专病档案弹窗
+          this.diseaseRecordDialogVisible = true
+        } catch (error) {
+          console.error('保存患者信息失败:', error)
+          this.$message.error('保存失败: ' + (error.message || '未知错误'))
+          this.submitLoading = false
+        }
+      }).catch(() => {
+        // 用户取消
       })
     },
 
+    /** 专病档案保存成功回调 */
+    handleDiseaseRecordSaved() {
+      this.$message.success('专病档案保存成功')
+      this.diseaseRecordDialogVisible = false
+    },
+
     /** 填写入组评估 */
-    handleFillEnrollmentAssessment() {
-      // 合并基本信息和入组信息
-      const patientData = {
-        ...this.basicForm,
-        ...this.enrollmentForm
+    async handleFillEnrollmentAssessment() {
+      // 如果患者已有ID（已保存或只读模式），直接打开弹窗
+      if (this.isReadonly || this.patientId) {
+        this.enrollmentAssessmentDialogVisible = true
+        return
       }
-      // 跳转到入组评估填写页面
-      const query = {
-        from: 'create',
-        patientData: JSON.stringify(patientData)
-      }
-      // 如果是只读模式，添加 mode 参数
-      if (this.isReadonly) {
-        query.mode = 'view'
-        query.patientId = this.patientId
-      }
-      this.$router.push({
-        path: '/patient/enrollment-assessment',
-        query
+
+      // 如果是新患者，提示先保存患者信息
+      this.$confirm('需要先保存患者信息才能填写入组评估，是否立即保存？', '提示', {
+        confirmButtonText: '保存并继续',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async() => {
+        // 1. 验证基本信息和入组信息
+        const basicValid = await this.$refs.basicForm.validate().catch(() => false)
+        if (!basicValid) {
+          this.$message.error('请先完善患者基本信息')
+          this.activeTab = 'basic'
+          return
+        }
+
+        const enrollmentValid = await this.$refs.enrollmentForm.validate().catch(() => false)
+        if (!enrollmentValid) {
+          this.$message.error('请先完善入组信息')
+          return
+        }
+
+        // 2. 保存患者信息
+        this.submitLoading = true
+        try {
+          const patientData = {
+            ...this.basicForm,
+            ...this.enrollmentForm
+          }
+
+          // 处理联系地址数组
+          if (Array.isArray(patientData.contactAddress)) {
+            patientData.contactAddress = patientData.contactAddress.join('')
+          }
+
+          patientData.detailAddress = this.basicForm.detailAddress || ''
+          patientData.remarks = this.basicForm.remarks || ''
+
+          // 调用API保存患者
+          const response = await addPatient(patientData)
+          const savedPatientInfo = response.data || response || {}
+
+          // 保存患者ID
+          this.patientId = savedPatientInfo.id
+          this.isEditMode = true
+
+          this.$message.success('患者信息已保存')
+          this.submitLoading = false
+
+          // 打开入组评估弹窗
+          this.enrollmentAssessmentDialogVisible = true
+        } catch (error) {
+          console.error('保存患者信息失败:', error)
+          this.$message.error('保存失败: ' + (error.message || '未知错误'))
+          this.submitLoading = false
+        }
+      }).catch(() => {
+        // 用户取消
       })
     }
   }
@@ -950,28 +1262,5 @@ export default {
   }
 }
 
-.file-entry-container {
-  margin: 20px 0;
-  padding: 20px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-
-  .file-entry-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 0;
-    border-bottom: 1px solid #e4e7ed;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .file-entry-label {
-      font-size: 14px;
-      color: #303133;
-      font-weight: 500;
-    }
-  }
-}
+// 档案信息表单项样式已移除，使用标准的 el-form-item 布局
 </style>

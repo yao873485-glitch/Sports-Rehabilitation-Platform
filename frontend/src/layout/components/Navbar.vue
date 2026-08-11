@@ -11,7 +11,10 @@
     <div class="right-menu">
       <el-dropdown class="avatar-container" trigger="click">
         <div class="avatar-wrapper">
-          <img :src="avatar+'?imageView2/1/w/80/h/80'" class="user-avatar">
+          <img v-if="avatarUrl" :src="avatarUrl" class="user-avatar">
+          <div v-else class="user-avatar placeholder">
+            <i class="el-icon-user" />
+          </div>
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown" class="user-dropdown">
@@ -41,7 +44,10 @@ export default {
     ...mapGetters([
       'sidebar',
       'avatar'
-    ])
+    ]),
+    avatarUrl() {
+      return this.avatar ? `${this.avatar}?imageView2/1/w/80/h/80` : ''
+    }
   },
   methods: {
     toggleSideBar() {
@@ -122,6 +128,14 @@ export default {
           width: 40px;
           height: 40px;
           border-radius: 10px;
+        }
+        .user-avatar.placeholder {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: #f0f2f5;
+          color: #909399;
+          font-size: 18px;
         }
 
         .el-icon-caret-bottom {

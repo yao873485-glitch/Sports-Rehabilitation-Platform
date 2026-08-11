@@ -194,99 +194,6 @@
       </div>
     </el-card>
 
-    <!-- 查看详情对话框 -->
-    <el-dialog title="患者详情" :visible.sync="detailDialogVisible" width="80%">
-      <div v-if="currentPatient" class="patient-detail">
-        <el-descriptions :column="3" border>
-          <el-descriptions-item label="序号">{{ currentPatient.serialNumber }}</el-descriptions-item>
-          <el-descriptions-item label="患者姓名">{{ currentPatient.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ currentPatient.gender }}</el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ currentPatient.age }}岁</el-descriptions-item>
-          <el-descriptions-item label="手机号">{{ currentPatient.phoneNumber }}</el-descriptions-item>
-          <el-descriptions-item label="随访状态">
-            <el-tag :type="getStatusType(currentPatient.followupStatus)">
-              {{ currentPatient.followupStatus }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="随访计划名称">{{ currentPatient.followupPlanName }}</el-descriptions-item>
-          <el-descriptions-item label="随访项目">{{ currentPatient.followupProject }}</el-descriptions-item>
-          <el-descriptions-item label="主负责医生">{{ currentPatient.primaryDoctor }}</el-descriptions-item>
-          <el-descriptions-item label="随访团队" :span="2">{{ currentPatient.followupTeam }}</el-descriptions-item>
-          <el-descriptions-item label="病种">{{ currentPatient.diseaseType }}</el-descriptions-item>
-          <el-descriptions-item label="申请时间">{{ formatDateTime(currentPatient.applicationTime) }}</el-descriptions-item>
-          <el-descriptions-item label="加入项目时间">
-            {{ currentPatient.enrollmentTime ? formatDateTime(currentPatient.enrollmentTime) : '暂未加入' }}
-          </el-descriptions-item>
-        </el-descriptions>
-
-        <!-- 操作日志（随访记录） -->
-        <div class="followup-records-section" style="margin-top: 30px;">
-          <h3 style="margin-bottom: 15px; font-size: 16px; font-weight: 600;">操作日志</h3>
-          <el-table
-            :data="followupRecords"
-            v-loading="recordsLoading"
-            element-loading-text="加载中..."
-            border
-            style="width: 100%"
-          >
-            <el-table-column prop="followupDoctor" label="操作人" width="100" align="center" />
-            <el-table-column prop="followupDate" label="操作时间" width="160" align="center">
-              <template slot-scope="scope">
-                {{ formatDateTime(scope.row.followupDate) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="followupType" label="类型" width="120" align="center" />
-            <el-table-column prop="followupContent" label="动作" show-overflow-tooltip />
-          </el-table>
-          <div v-if="followupRecords.length === 0 && !recordsLoading" style="text-align: center; padding: 40px; color: #909399;">
-            暂无数据
-          </div>
-        </div>
-      </div>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-      </div>
-    </el-dialog>
-
-    <!-- 编辑对话框 -->
-    <el-dialog title="编辑患者信息" :visible.sync="editDialogVisible" width="60%">
-      <el-form :model="editForm" :rules="editRules" ref="editForm" label-width="120px">
-        <el-form-item label="患者姓名" prop="patientName">
-          <el-input v-model="editForm.patientName" disabled />
-        </el-form-item>
-        <el-form-item label="随访计划名称" prop="followupPlanName">
-          <el-select v-model="editForm.followupPlanName" placeholder="请选择随访计划" style="width: 100%;">
-            <el-option label="妊娠健康宣教" value="妊娠健康宣教" />
-            <el-option label="糖尿病随访计划" value="糖尿病随访计划" />
-            <el-option label="高血压随访计划" value="高血压随访计划" />
-            <el-option label="康复训练计划" value="康复训练计划" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="随访团队" prop="followupTeam">
-          <el-input v-model="editForm.followupTeam" placeholder="请输入随访团队" />
-        </el-form-item>
-        <el-form-item label="主负责医生" prop="primaryDoctor">
-          <el-input v-model="editForm.primaryDoctor" placeholder="请输入主负责医生" />
-        </el-form-item>
-        <el-form-item label="病种" prop="diseaseType">
-          <el-input v-model="editForm.diseaseType" placeholder="请输入病种" />
-        </el-form-item>
-        <el-form-item label="随访状态" prop="followupStatus">
-          <el-select v-model="editForm.followupStatus" placeholder="请选择随访状态" style="width: 100%;">
-            <el-option label="待入组" value="待入组" />
-            <el-option label="随访中" value="随访中" />
-            <el-option label="已暂停" value="已暂停" />
-            <el-option label="已完成" value="已完成" />
-            <el-option label="已退出" value="已退出" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveEdit">保存</el-button>
-      </div>
-    </el-dialog>
-
     <!-- 移除项目确认对话框 -->
     <el-dialog
       title="移除项目确认"
@@ -392,7 +299,7 @@
 </template>
 
 <script>
-import { getFollowupList, getFollowupDetail, removeFromProject, saveFollowupRecord, getFollowupRecordsByEnrollmentId } from '@/api/followup'
+import { getFollowupList, removeFromProject, saveFollowupRecord } from '@/api/followup'
 
 export default {
   name: 'FollowupList',
@@ -416,41 +323,9 @@ export default {
         pageSize: 10,
         total: 0
       },
-      // 随访记录数据
-      followupRecords: [],
-      recordsLoading: false,
       // 对话框显示状态
-      detailDialogVisible: false,
-      editDialogVisible: false,
       removeDialogVisible: false,
       followupDialogVisible: false,
-      // 当前操作的患者
-      currentPatient: null,
-      // 编辑表单
-      editForm: {
-        id: null,
-        patientName: '',
-        followupPlanName: '',
-        followupTeam: '',
-        primaryDoctor: '',
-        diseaseType: '',
-        followupStatus: ''
-      },
-      editRules: {
-        followupPlanName: [
-          { required: true, message: '请选择随访计划', trigger: 'change' }
-        ],
-        primaryDoctor: [
-          { required: true, message: '请输入主负责医生', trigger: 'blur' },
-          { max: 100, message: '医生姓名不能超过100个字符', trigger: 'blur' }
-        ],
-        followupTeam: [
-          { max: 255, message: '随访团队名称不能超过255个字符', trigger: 'blur' }
-        ],
-        diseaseType: [
-          { max: 100, message: '病种不能超过100个字符', trigger: 'blur' }
-        ]
-      },
       // 随访表单
       followupForm: {
         enrollmentId: null,
@@ -524,64 +399,24 @@ export default {
       this.fetchData()
     },
     // 查看详情
-    async handleViewDetail(row) {
-      try {
-        const response = await getFollowupDetail(row.id)
-        this.currentPatient = response.data
-        this.detailDialogVisible = true
-        // 加载随访记录
-        this.loadFollowupRecords(row.id)
-      } catch (error) {
-        this.$message.error('获取详情失败')
-        console.error('获取详情失败:', error)
-      }
-    },
-    // 加载随访记录
-    async loadFollowupRecords(enrollmentId) {
-      this.recordsLoading = true
-      try {
-        const response = await getFollowupRecordsByEnrollmentId(enrollmentId)
-        if (response.data.success) {
-          this.followupRecords = response.data.data || []
-        } else {
-          this.followupRecords = []
+    handleViewDetail(row) {
+      // 跳转到随访详情页面
+      this.$router.push({
+        path: '/followup/detail',
+        query: {
+          id: row.id // 传递随访记录ID
         }
-      } catch (error) {
-        this.$message.error('获取随访记录失败')
-        console.error('获取随访记录失败:', error)
-        this.followupRecords = []
-      } finally {
-        this.recordsLoading = false
-      }
+      })
     },
     // 编辑
     handleEdit(row) {
-      this.currentPatient = { ...row }
-      this.editForm = {
-        id: row.id,
-        patientName: row.patientName,
-        followupPlanName: row.followupPlanName,
-        followupTeam: row.followupTeam,
-        primaryDoctor: row.primaryDoctor,
-        diseaseType: row.diseaseType,
-        followupStatus: row.followupStatus
-      }
-      this.editDialogVisible = true
-    },
-    // 保存编辑
-    async handleSaveEdit() {
-      try {
-        await this.$refs.editForm.validate()
-        // 这里应该调用更新API，暂时提示
-        this.$message.info('保存功能开发中')
-        this.editDialogVisible = false
-        // this.fetchData()
-      } catch (error) {
-        if (error !== false) {
-          this.$message.error('保存失败')
-          console.error('保存失败:', error)
+      // 跳转到随访编辑页面
+      this.$router.push({
+        path: '/followup/edit',
+        query: {
+          id: row.id // 传递随访记录ID
         }
-      }
+      })
     },
     // 移除项目
     handleRemove(row) {

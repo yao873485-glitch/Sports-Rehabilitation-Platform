@@ -334,7 +334,14 @@ export default {
     // 获取单元格状态
     getCellStatus(date, timeSlot) {
       const key = `${date}-${timeSlot}`
-      return this.scheduleData[key] || { isActive: false, personId: null, personName: null }
+      if (!this.scheduleData[key]) {
+        this.$set(this.scheduleData, key, {
+          isActive: false,
+          personId: null,
+          personName: null
+        })
+      }
+      return this.scheduleData[key]
     },
 
     // 处理单元格点击

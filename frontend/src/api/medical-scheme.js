@@ -9,19 +9,12 @@ export function getMedicalSchemeList(params) {
   })
 }
 
-// 获取医疗方案详情
-export function getMedicalSchemeDetail(id) {
-  return request({
-    url: `/api/medical-scheme/${id}`,
-    method: 'get'
-  })
-}
-
 // 结束医疗方案
-export function endMedicalScheme(id) {
+export function endMedicalScheme(id, reason) {
   return request({
     url: `/api/medical-scheme/${id}/end`,
-    method: 'put'
+    method: 'put',
+    data: { reason }
   })
 }
 

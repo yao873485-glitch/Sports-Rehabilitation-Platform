@@ -21,7 +21,7 @@
           <label>评定状态：</label>
           <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 150px;">
             <el-option label="全部" value="" />
-            <el-option label="未开始" :value="1" />
+            <el-option label="已创建" :value="1" />
             <el-option label="执行中" :value="2" />
             <el-option label="已完成" :value="3" />
             <el-option label="已结束" :value="4" />
@@ -103,7 +103,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="medicalRecordNo" label="档案号" width="180" align="center" header-align="center" />
+      <el-table-column prop="medicalRecordNumber" label="档案号" width="180" align="center" header-align="center" />
 
       <el-table-column prop="diseaseType" label="病种" width="150" align="center" header-align="center" />
 
@@ -128,13 +128,14 @@
 
       <el-table-column
         label="操作"
-        width="220"
+        width="240"
         fixed="right"
         align="center"
         header-align="center"
         class-name="small-padding fixed-width"
       >
         <template slot-scope="scope">
+          <!-- 查看按钮 - 所有状态都显示 -->
           <el-button
             size="mini"
             type="text"
@@ -142,23 +143,46 @@
           >
             查看
           </el-button>
+
+          <!-- 执行中状态(2)：显示结束、执行、清单 -->
           <el-button
+            v-if="scope.row.status == 2"
             size="mini"
             type="text"
-            :disabled="scope.row.status === '已结束'"
             @click="handleEnd(scope.row)"
           >
             结束
           </el-button>
           <el-button
+            v-if="scope.row.status == 2"
             size="mini"
             type="text"
-            :disabled="scope.row.status === '执行中' || scope.row.status === '已结束'"
             @click="handleExecute(scope.row)"
           >
             执行
           </el-button>
           <el-button
+            v-if="scope.row.status == 2"
+            size="mini"
+            type="text"
+            @click="handleList(scope.row)"
+          >
+            清单
+          </el-button>
+
+          <!-- 已结束状态(4)：显示清单 -->
+          <el-button
+            v-if="scope.row.status == 4"
+            size="mini"
+            type="text"
+            @click="handleList(scope.row)"
+          >
+            清单
+          </el-button>
+
+          <!-- 已创建状态(1)：显示清单 -->
+          <el-button
+            v-if="scope.row.status == 1"
             size="mini"
             type="text"
             @click="handleList(scope.row)"
@@ -178,43 +202,12 @@
       @pagination="getList"
     />
 
-    <!-- 查看详情对话框 -->
-    <el-dialog
-      title="评定方案详情"
-      :visible.sync="detailVisible"
-      width="800px"
-      append-to-body
-    >
-      <div v-if="currentAssessment" class="assessment-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="方案名称">{{ currentAssessment.assessmentName }}</el-descriptions-item>
-          <el-descriptions-item label="客户姓名">{{ currentAssessment.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ currentAssessment.gender }}</el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ currentAssessment.age }}岁</el-descriptions-item>
-          <el-descriptions-item label="档案号">{{ currentAssessment.medicalRecordNo }}</el-descriptions-item>
-          <el-descriptions-item label="病种">{{ currentAssessment.diseaseType }}</el-descriptions-item>
-          <el-descriptions-item label="入组机构">{{ currentAssessment.enrollmentInstitution }}</el-descriptions-item>
-          <el-descriptions-item label="执行机构">{{ currentAssessment.executionInstitution }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="getStatusType(currentAssessment.status)">
-              {{ getStatusText(currentAssessment.status) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="开方医生">{{ currentAssessment.prescribingDoctor }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间" :span="2">{{ currentAssessment.createdTime }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="detailVisible = false">关 闭</el-button>
-      </span>
-    </el-dialog>
   </div>
 </template>
 
 <script>
 import {
   getAssessmentExecutionList,
-  getAssessmentExecutionDetail,
   endAssessmentExecution,
   executeAssessment,
   getDiseaseTypes,
@@ -244,10 +237,7 @@ export default {
         enrollmentInstitution: '',
         executionInstitution: '',
         searchKeyword: ''
-      },
-      // 详情弹窗
-      detailVisible: false,
-      currentAssessment: null
+      }
     }
   },
   created() {
@@ -304,9 +294,9 @@ export default {
 
     /** 查看详情 */
     handleView(row) {
-      getAssessmentExecutionDetail(row.id).then(response => {
-        this.currentAssessment = response.data
-        this.detailVisible = true
+      this.$router.push({
+        path: '/assessment/view',
+        query: { id: row.id }
       })
     },
 
@@ -321,26 +311,30 @@ export default {
           this.$message.success('评定方案已结束')
           this.getList()
         })
+      }).catch(() => {
+        // 用户点击取消，不做任何操作
       })
     },
 
     /** 执行评定 */
     handleExecute(row) {
-      this.$confirm('确认开始执行该评定方案吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'info'
-      }).then(() => {
-        executeAssessment(row.id).then(() => {
-          this.$message.success('评定方案开始执行')
-          this.getList()
-        })
+      // 跳转到评定执行页面
+      this.$router.push({
+        path: '/assessment/execute',
+        query: { id: row.id }
       })
     },
 
     /** 清单操作 */
     handleList(row) {
-      this.$message.info('清单功能正在开发中...')
+      // 跳转到评定执行清单页面
+      this.$router.push({
+        path: '/assessment/assessment-list',
+        query: {
+          patientId: row.patientId,
+          schemeId: row.medicalSchemeId || '' // 如果有方案ID则传递，否则传空
+        }
+      })
     },
 
     /** 计算年龄 */
@@ -359,7 +353,7 @@ export default {
     /** 获取状态文本 */
     getStatusText(status) {
       const statusMap = {
-        1: '未开始',
+        1: '已创建',
         2: '执行中',
         3: '已完成',
         4: '已结束'
@@ -390,10 +384,6 @@ export default {
 .female-icon {
   color: #f56c6c;
   font-weight: bold;
-}
-
-.assessment-detail {
-  padding: 20px;
 }
 
 .filter-container {

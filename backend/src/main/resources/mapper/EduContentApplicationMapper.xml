@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.EduContentApplicationMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="ContentApplicationResultMap" type="com.rehabilitation.dto.EduContentApplicationVO">
+        <id column="id" property="id"/>
+        <result column="content_id" property="contentId"/>
+        <result column="content_type" property="contentType"/>
+        <result column="content_title" property="contentTitle"/>
+        <result column="content_description" property="contentDescription"/>
+        <result column="category_section" property="categorySection"/>
+        <result column="author" property="author"/>
+        <result column="application_module" property="applicationModule"/>
+        <result column="application_project" property="applicationProject"/>
+        <result column="channel" property="channel"/>
+        <result column="related_disease" property="relatedDisease"/>
+        <result column="related_symptom" property="relatedSymptom"/>
+        <result column="related_product" property="relatedProduct"/>
+        <result column="pin_status" property="pinStatus"/>
+        <result column="content_status" property="contentStatus"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="publish_time" property="publishTime"/>
+        <result column="article_url" property="articleUrl"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 联合查询图文和视频素材，关联配置表 -->
+    <select id="selectContentApplicationPage" resultMap="ContentApplicationResultMap">
+        SELECT
+            t.id,
+            t.content_id,
+            t.content_type,
+            t.content_title,
+            t.content_description,
+            t.category_section,
+            t.author,
+            COALESCE(c.application_module, '') as application_module,
+            COALESCE(c.application_project, '') as application_project,
+            COALESCE(c.channel, '') as channel,
+            COALESCE(c.related_diseases, '') as related_disease,
+            COALESCE(c.related_symptoms, '') as related_symptom,
+            COALESCE(c.related_products, '') as related_product,
+            COALESCE(c.is_pinned, 0) as pin_status,
+            t.content_status,
+            t.view_count,
+            t.like_count,
+            t.publish_time,
+            t.article_url,
+            t.created_at,
+            t.updated_at
+        FROM (
+            -- 图文素材
+            SELECT
+                id,
+                content_id,
+                '文章' as content_type,
+                content_title,
+                article_description as content_description,
+                category_section,
+                author,
+                content_status,
+                view_count,
+                like_count,
+                publish_time,
+                article_link as article_url,
+                created_time as created_at,
+                updated_time as updated_at
+            FROM education_image_content
+
+            UNION ALL
+
+            -- 视频素材
+            SELECT
+                id,
+                video_id as content_id,
+                '视频' as content_type,
+                video_title as content_title,
+                video_description as content_description,
+                '' as category_section,
+                author,
+                content_status,
+                view_count,
+                like_count,
+                publish_time,
+                '' as article_url,
+                created_at,
+                updated_at
+            FROM edu_video_asset
+        ) t
+        LEFT JOIN content_application_config c
+            ON t.content_id = c.content_id
+            AND t.content_type = c.content_type
+        <where>
+            <if test="contentTitle != null and contentTitle != ''">
+                AND t.content_title LIKE CONCAT('%', #{contentTitle}, '%')
+            </if>
+            <if test="author != null and author != ''">
+                AND t.author LIKE CONCAT('%', #{author}, '%')
+            </if>
+            <if test="resourceType != null and resourceType != ''">
+                AND t.content_type = #{resourceType}
+            </if>
+            <if test="categorySection != null and categorySection != ''">
+                AND t.category_section = #{categorySection}
+            </if>
+            <if test="status != null and status != ''">
+                AND t.content_status = #{status}
+            </if>
+            <if test="channel != null and channel != ''">
+                AND c.channel = #{channel}
+            </if>
+            <if test="pinStatus != null and pinStatus != ''">
+                <choose>
+                    <when test="pinStatus == '已置顶'">
+                        AND c.is_pinned = 1
+                    </when>
+                    <otherwise>
+                        AND (c.is_pinned = 0 OR c.is_pinned IS NULL)
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="publishStartTime != null and publishStartTime != ''">
+                AND t.publish_time &gt;= #{publishStartTime}
+            </if>
+            <if test="publishEndTime != null and publishEndTime != ''">
+                AND t.publish_time &lt;= #{publishEndTime}
+            </if>
+        </where>
+        ORDER BY t.created_at DESC
+    </select>
+
+</mapper>

@@ -115,7 +115,7 @@
               <p>上传证件</p>
             </div>
           </el-upload>
-          <p class="upload-limit">只能上传jpg/png文件，且不超过500kb</p>
+          <p class="upload-limit">只能上传jpg/png文件，且不超过5MB</p>
         </div>
       </el-form-item>
     </el-form>
@@ -219,14 +219,14 @@ export default {
      */
     beforeUpload(file) {
       const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
-      const isLt500K = file.size / 1024 < 500
+      const isLt5M = file.size / 1024 / 1024 < 5
 
       if (!isJPG) {
         this.$message.error('只能上传jpg或png格式的图片')
         return false
       }
-      if (!isLt500K) {
-        this.$message.error('图片大小不能超过500KB')
+      if (!isLt5M) {
+        this.$message.error('图片大小不能超过5MB')
         return false
       }
       return true

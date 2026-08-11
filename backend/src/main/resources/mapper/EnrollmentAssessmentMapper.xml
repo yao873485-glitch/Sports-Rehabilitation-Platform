@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.EnrollmentAssessmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.rehabilitation.entity.EnrollmentAssessment">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="patient_id" property="patientId" jdbcType="INTEGER"/>
+
+        <!-- 一般健康问题 -->
+        <result column="general_q1" property="generalQ1" jdbcType="VARCHAR"/>
+        <result column="general_q2" property="generalQ2" jdbcType="VARCHAR"/>
+        <result column="general_q3" property="generalQ3" jdbcType="VARCHAR"/>
+        <result column="general_q4" property="generalQ4" jdbcType="VARCHAR"/>
+        <result column="general_q5" property="generalQ5" jdbcType="VARCHAR"/>
+        <result column="general_q6" property="generalQ6" jdbcType="VARCHAR"/>
+        <result column="general_q7" property="generalQ7" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题1 -->
+        <result column="medical_q1" property="medicalQ1" jdbcType="VARCHAR"/>
+        <result column="medical_q1a" property="medicalQ1a" jdbcType="VARCHAR"/>
+        <result column="medical_q1b" property="medicalQ1b" jdbcType="VARCHAR"/>
+        <result column="medical_q1c" property="medicalQ1c" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题2 -->
+        <result column="medical_q2" property="medicalQ2" jdbcType="VARCHAR"/>
+        <result column="medical_q2a" property="medicalQ2a" jdbcType="VARCHAR"/>
+        <result column="medical_q2b" property="medicalQ2b" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题3 -->
+        <result column="medical_q3" property="medicalQ3" jdbcType="VARCHAR"/>
+        <result column="medical_q3a" property="medicalQ3a" jdbcType="VARCHAR"/>
+        <result column="medical_q3b" property="medicalQ3b" jdbcType="VARCHAR"/>
+        <result column="medical_q3c" property="medicalQ3c" jdbcType="VARCHAR"/>
+        <result column="medical_q3d" property="medicalQ3d" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题4 -->
+        <result column="medical_q4" property="medicalQ4" jdbcType="VARCHAR"/>
+        <result column="medical_q4a" property="medicalQ4a" jdbcType="VARCHAR"/>
+        <result column="medical_q4b" property="medicalQ4b" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题5 -->
+        <result column="medical_q5" property="medicalQ5" jdbcType="VARCHAR"/>
+        <result column="medical_q5a" property="medicalQ5a" jdbcType="VARCHAR"/>
+        <result column="medical_q5b" property="medicalQ5b" jdbcType="VARCHAR"/>
+        <result column="medical_q5c" property="medicalQ5c" jdbcType="VARCHAR"/>
+        <result column="medical_q5d" property="medicalQ5d" jdbcType="VARCHAR"/>
+        <result column="medical_q5e" property="medicalQ5e" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题6 -->
+        <result column="medical_q6" property="medicalQ6" jdbcType="VARCHAR"/>
+        <result column="medical_q6a" property="medicalQ6a" jdbcType="VARCHAR"/>
+        <result column="medical_q6b" property="medicalQ6b" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题7 -->
+        <result column="medical_q7" property="medicalQ7" jdbcType="VARCHAR"/>
+        <result column="medical_q7a" property="medicalQ7a" jdbcType="VARCHAR"/>
+        <result column="medical_q7b" property="medicalQ7b" jdbcType="VARCHAR"/>
+        <result column="medical_q7c" property="medicalQ7c" jdbcType="VARCHAR"/>
+        <result column="medical_q7d" property="medicalQ7d" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题8 -->
+        <result column="medical_q8" property="medicalQ8" jdbcType="VARCHAR"/>
+        <result column="medical_q8a" property="medicalQ8a" jdbcType="VARCHAR"/>
+        <result column="medical_q8b" property="medicalQ8b" jdbcType="VARCHAR"/>
+        <result column="medical_q8c" property="medicalQ8c" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题9 -->
+        <result column="medical_q9" property="medicalQ9" jdbcType="VARCHAR"/>
+        <result column="medical_q9a" property="medicalQ9a" jdbcType="VARCHAR"/>
+        <result column="medical_q9b" property="medicalQ9b" jdbcType="VARCHAR"/>
+        <result column="medical_q9c" property="medicalQ9c" jdbcType="VARCHAR"/>
+
+        <!-- 医疗相关问题10 -->
+        <result column="medical_q10" property="medicalQ10" jdbcType="VARCHAR"/>
+        <result column="medical_q10a" property="medicalQ10a" jdbcType="VARCHAR"/>
+        <result column="medical_q10b" property="medicalQ10b" jdbcType="VARCHAR"/>
+        <result column="medical_q10c" property="medicalQ10c" jdbcType="VARCHAR"/>
+
+        <!-- 运动建议 -->
+        <result column="recommendation1" property="recommendation1" jdbcType="VARCHAR"/>
+        <result column="recommendation2" property="recommendation2" jdbcType="VARCHAR"/>
+        <result column="recommendation3" property="recommendation3" jdbcType="VARCHAR"/>
+
+        <!-- 评估人员信息 -->
+        <result column="assessor_name" property="assessorName" jdbcType="VARCHAR"/>
+        <result column="assessment_date" property="assessmentDate" jdbcType="TIMESTAMP"/>
+
+        <!-- 系统字段 -->
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 根据患者ID查询入组评估 -->
+    <select id="selectByPatientId" resultMap="BaseResultMap">
+        SELECT * FROM enrollment_assessment WHERE patient_id = #{patientId}
+    </select>
+
+    <!-- 根据患者ID删除入组评估 -->
+    <delete id="deleteByPatientId">
+        DELETE FROM enrollment_assessment WHERE patient_id = #{patientId}
+    </delete>
+
+</mapper>

@@ -20,13 +20,13 @@ A full-stack web application for sports rehabilitation medical management built 
 
 ```bash
 # Clean and compile (skip tests)
-mvn clean compile -DskipTests
+cd backend && mvn clean compile -DskipTests
 
 # Full build with tests
-mvn clean install
+cd backend && mvn clean install
 
 # Run Spring Boot application
-mvn spring-boot:run
+cd backend && mvn spring-boot:run
 
 # Backend runs on port 8082
 # API docs: http://localhost:8082/api/doc.html
@@ -55,7 +55,7 @@ npm run lint
 ### Backend Structure
 
 ```
-src/main/java/com/rehabilitation/
+backend/src/main/java/com/rehabilitation/
 ├── common/          # Common utilities and base classes (Result, PageResult)
 ├── config/          # Spring configuration (WebSocket, CORS, MyBatis, etc.)
 ├── controller/      # REST API endpoints (@RestController)
@@ -67,7 +67,7 @@ src/main/java/com/rehabilitation/
 │   └── impl/        # Service implementations
 └── util/            # Utility classes
 
-src/main/resources/
+backend/src/main/resources/
 ├── mapper/          # MyBatis XML mapping files
 └── application.yml  # Application configuration
 ```
@@ -141,7 +141,7 @@ Frontend axios interceptor automatically handles response unwrapping in `utils/r
 ### MyBatis-Plus vs MyBatis XML
 
 - **Simple CRUD**: Use MyBatis-Plus `BaseMapper<T>` methods directly
-- **Complex queries**: Write custom XML in `src/main/resources/mapper/`
+- **Complex queries**: Write custom XML in `backend/src/main/resources/mapper/`
 - **Important**: When using XML mappers with Map parameters, always use `@Param` annotation or switch to entity objects
 
 ### Database Conventions
@@ -285,7 +285,7 @@ Always use `git commit -m "$(cat <<'EOF' ... EOF)"` pattern for multi-line messa
    - Access docs at http://localhost:8082/api/doc.html after backend startup
 
 4. **Testing**:
-   - Backend tests: Place in `src/test/java/`
+   - Backend tests: Place in `backend/src/test/java/`
    - Skip tests during build: `-DskipTests` flag
    - Frontend: Currently no test setup
 

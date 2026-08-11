@@ -157,7 +157,7 @@ export function updateContentApplication(data) {
 // 获取内容应用配置
 export function getContentConfig(contentId, contentType) {
   return request({
-    url: '/content-config/get',
+    url: '/api/content-config/get',
     method: 'get',
     params: { contentId, contentType }
   })
@@ -166,7 +166,7 @@ export function getContentConfig(contentId, contentType) {
 // 保存内容应用配置
 export function saveContentConfig(data) {
   return request({
-    url: '/content-config/save',
+    url: '/api/content-config/save',
     method: 'post',
     data
   })
@@ -175,8 +175,17 @@ export function saveContentConfig(data) {
 // 删除内容应用配置
 export function deleteContentConfig(contentId, contentType) {
   return request({
-    url: '/content-config/delete',
+    url: '/api/content-config/delete',
     method: 'delete',
+    params: { contentId, contentType }
+  })
+}
+
+// 获取配置操作日志
+export function getConfigLogs(contentId, contentType) {
+  return request({
+    url: '/api/content-config/logs',
+    method: 'get',
     params: { contentId, contentType }
   })
 }

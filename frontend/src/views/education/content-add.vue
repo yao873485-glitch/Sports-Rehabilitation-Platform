@@ -78,8 +78,8 @@
           />
         </el-form-item>
 
-        <!-- 是否支持游戏模式 -->
-        <el-form-item label="是否支持游戏模式" prop="supportGameMode">
+        <!-- 是否支持游客模式 -->
+        <el-form-item label="是否支持游客模式" prop="supportGameMode">
           <el-radio-group v-model="contentForm.supportGameMode" :disabled="isReadOnly">
             <el-radio :label="1">支持</el-radio>
             <el-radio :label="0">不支持</el-radio>

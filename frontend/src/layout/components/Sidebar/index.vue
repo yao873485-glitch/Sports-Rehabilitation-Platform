@@ -23,7 +23,6 @@
 <script>
 import { mapGetters } from 'vuex'
 import SidebarItem from './SidebarItem'
-import variables from '@/styles/variables.scss'
 
 export default {
   components: { SidebarItem },
@@ -44,7 +43,16 @@ export default {
       return !this.sidebar.opened
     },
     variables() {
-      return variables
+      // 直接返回颜色配置对象，避免SCSS导出问题
+      return {
+        menuText: 'rgb(255, 255, 255)',
+        menuActiveText: '#409eff',
+        menuBg: 'rgb(0, 21, 41)',
+        menuHover: '#001528',
+        subMenuBg: 'rgb(0, 12, 23)',
+        subMenuHover: '#000c17',
+        sideBarWidth: '280px'
+      }
     }
   }
 }

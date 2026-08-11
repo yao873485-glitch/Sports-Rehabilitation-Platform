@@ -59,6 +59,10 @@
       :visible.sync="registerDialogVisible"
       @success="handleRegisterSuccess"
     />
+
+    <div class="admin-entry">
+      <span @click="goToAdmin">管理员</span>
+    </div>
   </div>
 </template>
 
@@ -146,6 +150,10 @@ export default {
     handleRegisterSuccess() {
       this.$message.success('注册申请提交成功，请等待管理员审核')
       this.registerDialogVisible = false
+    },
+
+    goToAdmin() {
+      this.$router.push('/admin/login')
     }
   }
 }
@@ -163,7 +171,7 @@ export default {
   .login-box {
     width: 420px;
     padding: 50px 40px;
-    background: white;
+    background: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 
@@ -252,6 +260,26 @@ export default {
         }
       }
     }
+  }
+}
+
+.admin-entry {
+  position: fixed;
+  right: 32px;
+  bottom: 28px;
+  font-size: 14px;
+  color: #606266;
+  cursor: pointer;
+  user-select: none;
+
+  span {
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    transition: border-color 0.2s;
+  }
+
+  span:hover {
+    border-bottom-color: #606266;
   }
 }
 </style>

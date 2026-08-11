@@ -17,6 +17,23 @@ export function getPatientDetail(id) {
   })
 }
 
+// 获取患者中心详情（包含档案/评估等）
+export function getPatientCenterDetail(id) {
+  return request({
+    url: `/api/patient/center-detail/${id}`,
+    method: 'get'
+  })
+}
+
+// 更新入组审核状态
+export function updateEnrollmentAudit(data) {
+  return request({
+    url: '/api/patient/enrollment-audit',
+    method: 'post',
+    data
+  })
+}
+
 // 新增患者信息
 export function addPatient(data) {
   return request({

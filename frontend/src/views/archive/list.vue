@@ -63,8 +63,16 @@
 
       <!-- 其他字段 -->
       <el-table-column prop="birthDate" label="出生日期" width="200" align="center" header-align="center" />
-      <el-table-column prop="idCard" label="证件号" width="220" align="center" header-align="center" />
-      <el-table-column prop="phone" label="联系电话" width="200" align="center" header-align="center" />
+      <el-table-column label="证件号" width="220" align="center" header-align="center">
+        <template slot-scope="scope">
+          {{ maskIdCard(scope.row.idCard) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="联系电话" width="200" align="center" header-align="center">
+        <template slot-scope="scope">
+          {{ maskPhone(scope.row.phone) }}
+        </template>
+      </el-table-column>
       <el-table-column prop="medicalRecordNo" label="档案号" width="240" align="center" header-align="center" />
       <el-table-column prop="diseaseType" label="病种" width="200" align="center" header-align="center" />
       <el-table-column prop="enrollmentInstitution" label="入组机构" width="200" align="center" header-align="center" />
@@ -184,6 +192,26 @@ export default {
         age--
       }
       return age
+    },
+
+    /** 脱敏证件号 - 从第4位开始到倒数第5位结束用*隐藏 */
+    maskIdCard(idCard) {
+      if (!idCard || idCard.length < 8) return idCard || '-'
+      const start = idCard.substring(0, 3) // 前3位
+      const end = idCard.substring(idCard.length - 4) // 后4位
+      const maskLength = idCard.length - 7 // 需要遮蔽的长度
+      const mask = '*'.repeat(maskLength)
+      return start + mask + end
+    },
+
+    /** 脱敏手机号 - 从第4位到倒数第5位结束用*表示 */
+    maskPhone(phone) {
+      if (!phone || phone.length < 8) return phone || '-'
+      const start = phone.substring(0, 3) // 前3位
+      const end = phone.substring(phone.length - 4) // 后4位
+      const maskLength = phone.length - 7 // 需要遮蔽的长度
+      const mask = '*'.repeat(maskLength)
+      return start + mask + end
     },
 
     /** 查询患者列表 */

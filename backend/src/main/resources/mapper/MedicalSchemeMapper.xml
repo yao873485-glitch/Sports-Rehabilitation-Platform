@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.MedicalSchemeMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.rehabilitation.entity.MedicalScheme">
+        <id column="id" property="id"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="scheme_id" property="schemeId"/>
+        <result column="doctor_name" property="doctorName"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="create_date" property="createDate"/>
+    </resultMap>
+
+    <!-- MedicalSchemeVO结果映射 -->
+    <resultMap id="MedicalSchemeVOMap" type="com.rehabilitation.dto.MedicalSchemeVO">
+        <id column="id" property="id"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="gender" property="gender"/>
+        <result column="gender_desc" property="genderDesc"/>
+        <result column="age" property="age"/>
+        <result column="archive_no" property="archiveNo"/>
+        <result column="id_card" property="idCard"/>
+        <result column="birth_date" property="birthDate"/>
+        <result column="diagnosis" property="diagnosis"/>
+        <result column="scheme_id" property="schemeId"/>
+        <result column="disease_type" property="diseaseType"/>
+        <result column="status" property="status"/>
+        <result column="status_desc" property="statusDesc"/>
+        <result column="doctor_name" property="doctorName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="end_time" property="endTime"/>
+    </resultMap>
+
+    <!-- 分页查询医疗方案列表 - 按患者分组，每个患者只显示最新的方案 -->
+    <select id="selectMedicalSchemePage" resultMap="MedicalSchemeVOMap">
+        SELECT
+            latest.id,
+            latest.patient_id,
+            p.name as patient_name,
+            CASE p.gender WHEN '男' THEN 1 WHEN '女' THEN 2 ELSE 0 END as gender,
+            p.gender as gender_desc,
+            TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age,
+            p.medical_record_no as archive_no,
+            p.id_card as id_card,
+            p.birth_date as birth_date,
+            pd.diagnosis as diagnosis,
+            latest.scheme_id,
+            p.disease_type,
+            latest.status,
+            CASE latest.status WHEN 1 THEN '执行中' WHEN 2 THEN '已结束' ELSE '未知' END as status_desc,
+            latest.doctor_name,
+            latest.create_time,
+            latest.end_time
+        FROM (
+            SELECT ms.*,
+                   ROW_NUMBER() OVER (PARTITION BY ms.patient_id ORDER BY ms.create_time DESC) as rn
+            FROM medical_scheme ms
+            <where>
+                <if test="query.startTime != null">
+                    AND ms.create_time >= #{query.startTime}
+                </if>
+                <if test="query.endTime != null">
+                    AND ms.create_time &lt;= #{query.endTime}
+                </if>
+                <if test="query.startDate != null">
+                    AND ms.create_date >= #{query.startDate}
+                </if>
+                <if test="query.endDate != null">
+                    AND ms.create_date &lt;= #{query.endDate}
+                </if>
+            </where>
+        ) latest
+        INNER JOIN patient p ON latest.patient_id = p.id
+        LEFT JOIN patient_detail pd ON p.id = pd.patient_id
+        WHERE latest.rn = 1
+        <if test="query.status != null and query.status != ''">
+            AND latest.status = #{query.status}
+        </if>
+        <if test="query.diseaseType != null and query.diseaseType != ''">
+            AND p.disease_type = #{query.diseaseType}
+        </if>
+        <if test="query.doctorName != null and query.doctorName != ''">
+            AND latest.doctor_name LIKE CONCAT('%', #{query.doctorName}, '%')
+        </if>
+        <if test="query.searchKeyword != null and query.searchKeyword != ''">
+            AND (p.name LIKE CONCAT('%', #{query.searchKeyword}, '%')
+            OR p.medical_record_no LIKE CONCAT('%', #{query.searchKeyword}, '%'))
+        </if>
+        ORDER BY latest.create_time DESC
+    </select>
+
+    <!-- 统计患者执行中的方案数量（通过档案号） -->
+    <select id="countActiveSchemeByMedicalRecordNo" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM medical_scheme ms
+        INNER JOIN patient p ON ms.patient_id = p.id
+        WHERE p.medical_record_no = #{medicalRecordNo}
+          AND ms.status = 1
+    </select>
+
+</mapper>

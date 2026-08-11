@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rehabilitation.mapper.HealthRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.rehabilitation.entity.HealthRecord">
+        <id property="id" column="id"/>
+        <result property="patientId" column="patient_id"/>
+
+        <!-- 基本信息 -->
+        <result property="name" column="name"/>
+        <result property="age" column="age"/>
+        <result property="gender" column="gender"/>
+        <result property="birthDate" column="birth_date"/>
+        <result property="idCardType" column="id_card_type"/>
+        <result property="idCard" column="id_card"/>
+        <result property="workUnit" column="work_unit"/>
+        <result property="nativePlace" column="native_place"/>
+        <result property="birthPlace" column="birth_place"/>
+        <result property="ethnicity" column="ethnicity"/>
+        <result property="personalPhone" column="personal_phone"/>
+
+        <!-- 紧急联系人 -->
+        <result property="emergencyContactName" column="emergency_contact_name"/>
+        <result property="emergencyContactRelation" column="emergency_contact_relation"/>
+        <result property="emergencyContactPhone" column="emergency_contact_phone"/>
+
+        <!-- 常驻信息 -->
+        <result property="residenceType" column="residence_type"/>
+        <result property="householdAddress" column="household_address"/>
+        <result property="residenceAddress" column="residence_address"/>
+
+        <!-- 文化程度、职业、婚姻、医疗费用 -->
+        <result property="educationLevel" column="education_level"/>
+        <result property="occupation" column="occupation"/>
+        <result property="maritalStatus" column="marital_status"/>
+        <result property="medicalPaymentMethod" column="medical_payment_method"/>
+
+        <!-- 过敏史 -->
+        <result property="allergyList" column="allergy_list" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="allergyDetail" column="allergy_detail"/>
+
+        <!-- 暴露史 -->
+        <result property="exposureList" column="exposure_list" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+
+        <!-- 既往史 -->
+        <result property="diseaseHistory" column="disease_history"/>
+        <result property="diseaseDetail" column="disease_detail"/>
+        <result property="surgeryHistory" column="surgery_history"/>
+        <result property="surgeryDetail" column="surgery_detail"/>
+        <result property="traumaHistory" column="trauma_history"/>
+        <result property="traumaDetail" column="trauma_detail"/>
+        <result property="transfusionHistory" column="transfusion_history"/>
+        <result property="transfusionDetail" column="transfusion_detail"/>
+
+        <!-- 预防接种史 -->
+        <result property="vaccinationHistory" column="vaccination_history"/>
+        <result property="vaccinationDetail" column="vaccination_detail"/>
+
+        <!-- 家族史 -->
+        <result property="fatherDiseaseList" column="father_disease_list" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="fatherDetail" column="father_detail"/>
+        <result property="motherDiseaseList" column="mother_disease_list" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="motherDetail" column="mother_detail"/>
+        <result property="siblingsDiseaseList" column="siblings_disease_list" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="siblingsDetail" column="siblings_detail"/>
+        <result property="childrenDiseaseList" column="children_disease_list" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="childrenDetail" column="children_detail"/>
+
+        <!-- 遗传病史 -->
+        <result property="geneticDiseaseHistory" column="genetic_disease_history"/>
+        <result property="geneticDiseaseDetail" column="genetic_disease_detail"/>
+
+        <!-- 残疾情况 -->
+        <result property="disabilityList" column="disability_list" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="disabilityDetail" column="disability_detail"/>
+
+        <!-- 个人健康标识 -->
+        <result property="healthIdentity" column="health_identity"/>
+        <result property="pregnancyRiskLevel" column="pregnancy_risk_level"/>
+
+        <!-- 慢性/重点疾病 -->
+        <result property="chronicDiseaseList" column="chronic_disease_list" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+
+        <!-- 法定传染病 -->
+        <result property="infectiousDiseaseList" column="infectious_disease_list" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="infectiousDiseaseDetail" column="infectious_disease_detail"/>
+
+        <!-- 体重和血型 -->
+        <result property="weightStatus" column="weight_status"/>
+        <result property="bloodTypeAbo" column="blood_type_abo"/>
+        <result property="bloodTypeRh" column="blood_type_rh"/>
+
+        <!-- 系统字段 -->
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 根据患者ID查询健康档案 -->
+    <select id="selectByPatientId" resultMap="BaseResultMap">
+        SELECT * FROM health_record WHERE patient_id = #{patientId}
+    </select>
+
+    <!-- 根据患者ID删除健康档案 -->
+    <delete id="deleteByPatientId">
+        DELETE FROM health_record WHERE patient_id = #{patientId}
+    </delete>
+
+</mapper>

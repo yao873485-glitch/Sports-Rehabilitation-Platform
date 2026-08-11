@@ -21,6 +21,7 @@
       <el-button class="custom-primary-btn" icon="el-icon-search" @click="handleSearch">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <el-button
+        v-if="showQuickCreate"
         class="custom-primary-btn quick-create-btn"
         @click="handleQuickCreate"
       >
@@ -103,6 +104,10 @@ export default {
     visible: {
       type: Boolean,
       default: false
+    },
+    showQuickCreate: {
+      type: Boolean,
+      default: true
     }
   },
   data() {

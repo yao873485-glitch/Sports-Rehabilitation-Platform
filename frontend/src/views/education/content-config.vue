@@ -13,23 +13,24 @@
         <el-form
           ref="configForm"
           :model="configForm"
+          :rules="formRules"
           label-width="140px"
           class="config-form"
         >
-          <el-form-item label="应用项目">
-            <el-input v-model="configForm.applicationProject" placeholder="请输入" style="width: 300px;" />
+          <el-form-item label="应用项目" prop="applicationProject">
+            <el-input v-model="configForm.applicationProject" placeholder="请输入应用项目" style="width: 300px;" />
           </el-form-item>
 
-          <el-form-item label="应用模块">
-            <el-select v-model="configForm.applicationModule" placeholder="请选择" style="width: 300px;">
+          <el-form-item label="应用模块" prop="applicationModule">
+            <el-select v-model="configForm.applicationModule" placeholder="请选择应用模块" style="width: 300px;">
               <el-option label="医教" value="医教" />
               <el-option label="患教" value="患教" />
               <el-option label="健康管理" value="健康管理" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="所属频道">
-            <el-select v-model="configForm.channel" placeholder="请选择" style="width: 300px;">
+          <el-form-item label="所属频道" prop="channel">
+            <el-select v-model="configForm.channel" placeholder="请选择所属频道" style="width: 300px;">
               <el-option label="儿童生长发育" value="儿童生长发育" />
               <el-option label="育儿健康" value="育儿健康" />
               <el-option label="随访" value="随访" />
@@ -42,38 +43,58 @@
             </el-select>
           </el-form-item>
 
+          <el-form-item label="关联配置">
+            <div class="relation-config">
+              <div class="relation-item">
+                <span class="relation-label">关联科室：</span>
+                <span class="relation-value">{{ configForm.relatedDepartments || '未关联' }}</span>
+                <el-link type="primary" @click="showDepartmentDialog">去关联</el-link>
+              </div>
+              <div class="relation-item">
+                <span class="relation-label">关联医生：</span>
+                <span class="relation-value">{{ configForm.relatedDoctors || '未关联' }}</span>
+                <el-link type="primary" @click="showDoctorDialog">去关联</el-link>
+              </div>
+            </div>
+          </el-form-item>
+
           <el-form-item label="关联疾病">
-            <el-input
+            <el-select
               v-model="configForm.relatedDiseases"
-              type="textarea"
-              :rows="3"
-              placeholder="多个疾病用逗号分隔"
+              multiple
+              filterable
+              allow-create
+              placeholder="请选择或输入关联疾病"
               style="width: 500px;"
-            />
+            >
+              <el-option v-for="item in diseaseOptions" :key="item" :label="item" :value="item" />
+            </el-select>
           </el-form-item>
 
           <el-form-item label="关联症状">
-            <el-input
+            <el-select
               v-model="configForm.relatedSymptoms"
-              type="textarea"
-              :rows="3"
-              placeholder="多个症状用逗号分隔"
+              multiple
+              filterable
+              allow-create
+              placeholder="请选择或输入关联症状"
               style="width: 500px;"
-            />
+            >
+              <el-option v-for="item in symptomOptions" :key="item" :label="item" :value="item" />
+            </el-select>
           </el-form-item>
 
           <el-form-item label="关联商品">
-            <el-input
+            <el-select
               v-model="configForm.relatedProducts"
-              type="textarea"
-              :rows="3"
-              placeholder="多个商品用逗号分隔"
+              multiple
+              filterable
+              allow-create
+              placeholder="请选择或输入关联商品"
               style="width: 500px;"
-            />
-          </el-form-item>
-
-          <el-form-item label="作者">
-            <el-input v-model="configForm.author" placeholder="请输入作者" style="width: 300px;" />
+            >
+              <el-option v-for="item in productOptions" :key="item" :label="item" :value="item" />
+            </el-select>
           </el-form-item>
 
           <el-form-item label="排序">
@@ -84,28 +105,63 @@
             <el-switch v-model="configForm.isPinned" :active-value="1" :inactive-value="0" />
           </el-form-item>
 
-          <el-form-item label="备注">
-            <el-input
-              v-model="configForm.remark"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入备注"
-              style="width: 500px;"
-            />
-          </el-form-item>
-
           <el-form-item>
             <el-button @click="goBack">返回</el-button>
             <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
           </el-form-item>
         </el-form>
+
+        <!-- 日志记录 -->
+        <div v-if="operationLogs.length > 0" class="operation-logs">
+          <h3 class="logs-title">日志记录</h3>
+          <el-table :data="operationLogs" border>
+            <el-table-column prop="operationType" label="操作类型" width="120" align="center" />
+            <el-table-column prop="operationContent" label="操作内容" show-overflow-tooltip />
+            <el-table-column prop="operator" label="操作人" width="120" align="center" />
+            <el-table-column prop="operationTime" label="操作时间" width="180" align="center" />
+          </el-table>
+        </div>
       </div>
+
+    <!-- 关联科室对话框 -->
+    <el-dialog title="关联科室" :visible.sync="departmentDialogVisible" width="600px">
+      <el-select
+        v-model="selectedDepartments"
+        multiple
+        filterable
+        placeholder="请选择科室"
+        style="width: 100%;"
+      >
+        <el-option v-for="dept in departmentList" :key="dept" :label="dept" :value="dept" />
+      </el-select>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="departmentDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmDepartments">确定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 关联医生对话框 -->
+    <el-dialog title="关联医生" :visible.sync="doctorDialogVisible" width="600px">
+      <el-select
+        v-model="selectedDoctors"
+        multiple
+        filterable
+        placeholder="请选择医生"
+        style="width: 100%;"
+      >
+        <el-option v-for="doctor in doctorList" :key="doctor" :label="doctor" :value="doctor" />
+      </el-select>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="doctorDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmDoctors">确定</el-button>
+      </div>
+    </el-dialog>
     </el-card>
   </div>
 </template>
 
 <script>
-import { getContentConfig, saveContentConfig } from '@/api/education'
+import { getContentConfig, saveContentConfig, getConfigLogs } from '@/api/education'
 
 export default {
   name: 'ContentConfig',
@@ -120,14 +176,38 @@ export default {
         applicationProject: '',
         applicationModule: '',
         channel: '',
-        relatedDiseases: '',
-        relatedSymptoms: '',
-        relatedProducts: '',
-        author: '',
+        relatedDiseases: [],
+        relatedSymptoms: [],
+        relatedProducts: [],
+        relatedDepartments: '',
+        relatedDoctors: '',
         sortOrder: 0,
-        isPinned: 0,
-        remark: ''
-      }
+        isPinned: 0
+      },
+      formRules: {
+        applicationProject: [
+          { required: true, message: '请输入应用项目', trigger: 'blur' }
+        ],
+        applicationModule: [
+          { required: true, message: '请选择应用模块', trigger: 'change' }
+        ],
+        channel: [
+          { required: true, message: '请选择所属频道', trigger: 'change' }
+        ]
+      },
+      // 下拉选项数据
+      diseaseOptions: ['糖尿病', '高血压', '冠心病', '脑卒中', '慢性阻塞性肺疾病', '哮喘', '类风湿关节炎', '骨质疏松', '抑郁症', '焦虑症'],
+      symptomOptions: ['头痛', '发热', '咳嗽', '胸闷', '气短', '乏力', '食欲不振', '恶心', '呕吐', '腹痛', '腹泻', '便秘', '失眠', '心悸'],
+      productOptions: ['血糖仪', '血压计', '雾化器', '制氧机', '呼吸机', '康复器械', '理疗仪', '按摩器', '护理床', '轮椅'],
+      // 关联科室和医生
+      departmentDialogVisible: false,
+      selectedDepartments: [],
+      departmentList: ['内科', '外科', '儿科', '妇产科', '骨科', '神经内科', '心血管内科', '呼吸内科', '消化内科', '内分泌科', '肾内科', '血液科', '肿瘤科', '康复医学科', '中医科'],
+      doctorDialogVisible: false,
+      selectedDoctors: [],
+      doctorList: ['张医生', '李医生', '王医生', '刘医生', '陈医生', '赵医生', '孙医生', '周医生', '吴医生', '郑医生'],
+      // 日志记录
+      operationLogs: []
     }
   },
   created() {
@@ -138,6 +218,7 @@ export default {
 
     if (this.contentId && this.contentType) {
       this.fetchConfig()
+      this.fetchLogs()
     } else {
       this.$message.error('缺少必要参数')
       this.goBack()
@@ -155,52 +236,90 @@ export default {
             applicationProject: config.applicationProject || '',
             applicationModule: config.applicationModule || '',
             channel: config.channel || '',
-            relatedDiseases: config.relatedDiseases || '',
-            relatedSymptoms: config.relatedSymptoms || '',
-            relatedProducts: config.relatedProducts || '',
-            author: config.operator || '',
+            relatedDiseases: config.relatedDiseases ? config.relatedDiseases.split(',').filter(item => item.trim()) : [],
+            relatedSymptoms: config.relatedSymptoms ? config.relatedSymptoms.split(',').filter(item => item.trim()) : [],
+            relatedProducts: config.relatedProducts ? config.relatedProducts.split(',').filter(item => item.trim()) : [],
+            relatedDepartments: config.relatedDepartments || '',
+            relatedDoctors: config.relatedDoctors || '',
             sortOrder: config.sortOrder || 0,
-            isPinned: config.isPinned || 0,
-            remark: config.remark || ''
+            isPinned: config.isPinned || 0
           }
+          // 初始化已选择的科室和医生
+          this.selectedDepartments = config.relatedDepartments ? config.relatedDepartments.split(',').filter(item => item.trim()) : []
+          this.selectedDoctors = config.relatedDoctors ? config.relatedDoctors.split(',').filter(item => item.trim()) : []
         }
       } catch (error) {
         console.error('获取配置失败:', error)
-        // 如果没有配置，保持空表单即可
       } finally {
         this.loading = false
       }
     },
+    // 获取日志记录
+    async fetchLogs() {
+      try {
+        const response = await getConfigLogs(this.contentId, this.contentType)
+        if (response && response.data) {
+          this.operationLogs = response.data
+        }
+      } catch (error) {
+        console.error('获取日志失败:', error)
+      }
+    },
+    // 显示科室选择对话框
+    showDepartmentDialog() {
+      this.departmentDialogVisible = true
+    },
+    // 确认科室选择
+    confirmDepartments() {
+      this.configForm.relatedDepartments = this.selectedDepartments.join(',')
+      this.departmentDialogVisible = false
+    },
+    // 显示医生选择对话框
+    showDoctorDialog() {
+      this.doctorDialogVisible = true
+    },
+    // 确认医生选择
+    confirmDoctors() {
+      this.configForm.relatedDoctors = this.selectedDoctors.join(',')
+      this.doctorDialogVisible = false
+    },
     // 保存配置
     async handleSave() {
-      this.saving = true
-      try {
-        const data = {
-          contentId: this.contentId,
-          contentType: this.contentType,
-          applicationProject: this.configForm.applicationProject,
-          applicationModule: this.configForm.applicationModule,
-          channel: this.configForm.channel,
-          relatedDiseases: this.configForm.relatedDiseases,
-          relatedSymptoms: this.configForm.relatedSymptoms,
-          relatedProducts: this.configForm.relatedProducts,
-          sortOrder: this.configForm.sortOrder,
-          isPinned: this.configForm.isPinned,
-          remark: this.configForm.remark,
-          operator: this.configForm.author || '系统管理员'
+      // 表单验证
+      this.$refs.configForm.validate(async (valid) => {
+        if (!valid) {
+          return false
         }
 
-        await saveContentConfig(data)
-        this.$message.success('保存成功')
-        setTimeout(() => {
-          this.goBack()
-        }, 1000)
-      } catch (error) {
-        this.$message.error('保存失败')
-        console.error('保存失败:', error)
-      } finally {
-        this.saving = false
-      }
+        this.saving = true
+        try {
+          const data = {
+            contentId: this.contentId,
+            contentType: this.contentType,
+            applicationProject: this.configForm.applicationProject,
+            applicationModule: this.configForm.applicationModule,
+            channel: this.configForm.channel,
+            relatedDiseases: this.configForm.relatedDiseases.join(','),
+            relatedSymptoms: this.configForm.relatedSymptoms.join(','),
+            relatedProducts: this.configForm.relatedProducts.join(','),
+            relatedDepartments: this.configForm.relatedDepartments,
+            relatedDoctors: this.configForm.relatedDoctors,
+            sortOrder: this.configForm.sortOrder,
+            isPinned: this.configForm.isPinned,
+            operator: '系统管理员'
+          }
+
+          await saveContentConfig(data)
+          this.$message.success('保存成功')
+          // 重新加载日志
+          this.fetchLogs()
+        } catch (error) {
+          this.$message.error('保存失败')
+          console.error('保存失败:', error)
+        } finally {
+          this.saving = false
+        }
+      })
     },
     // 返回
     goBack() {
@@ -252,6 +371,51 @@ export default {
 
     ::v-deep .el-form-item {
       margin-bottom: 22px;
+    }
+
+    .relation-config {
+      .relation-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+
+        .relation-label {
+          font-weight: 500;
+          color: #606266;
+          margin-right: 8px;
+        }
+
+        .relation-value {
+          flex: 1;
+          color: #303133;
+          margin-right: 12px;
+        }
+
+        .el-link {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .operation-logs {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid #ebeef5;
+
+    .logs-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 16px;
+    }
+
+    ::v-deep .el-table {
+      th {
+        background-color: rgb(248, 248, 249);
+        color: rgb(81, 90, 110);
+        font-weight: 500;
+      }
     }
   }
 }

@@ -70,7 +70,7 @@
               {{ parseTime(scope.row.createdTime) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="center" width="150" fixed="right">
+          <el-table-column label="操作" align="center" width="200" fixed="right">
             <template slot-scope="scope">
               <el-button
                 size="mini"
@@ -80,15 +80,38 @@
               >
                 编辑
               </el-button>
+              <!-- 已上架状态：只显示下架按钮 -->
               <el-button
+                v-if="scope.row.status === '已上架'"
                 size="mini"
                 type="text"
-                :icon="scope.row.status === '已上架' ? 'el-icon-bottom' : 'el-icon-top'"
-                :class="scope.row.status === '已上架' ? 'text-danger' : 'text-success'"
+                icon="el-icon-bottom"
+                class="text-danger"
                 @click="handleStatusChange(scope.row)"
               >
-                {{ scope.row.status === '已上架' ? '下架' : '上架' }}
+                下架
               </el-button>
+              <!-- 已下架状态：显示上架和删除按钮 -->
+              <template v-if="scope.row.status === '已下架'">
+                <el-button
+                  size="mini"
+                  type="text"
+                  icon="el-icon-top"
+                  class="text-success"
+                  @click="handleStatusChange(scope.row)"
+                >
+                  上架
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="text"
+                  icon="el-icon-delete"
+                  class="text-danger"
+                  @click="handleDelete(scope.row)"
+                >
+                  删除
+                </el-button>
+              </template>
             </template>
           </el-table-column>
         </el-table>
@@ -124,9 +147,9 @@
         ref="form"
         :model="form"
         :rules="rules"
-        label-width="100px"
+        label-width="120px"
       >
-        <el-form-item label="运动方式" prop="exerciseType">
+        <el-form-item label="运动方式：" prop="exerciseType" required>
           <el-select v-model="form.exerciseType" placeholder="请选择运动方式" style="width: 100%">
             <el-option label="游泳" value="游泳" />
             <el-option label="瑜伽" value="瑜伽" />
@@ -137,29 +160,45 @@
             <el-option label="有氧操" value="有氧操" />
           </el-select>
         </el-form-item>
-        <el-form-item label="教室名称" prop="classroomName">
+        <el-form-item label="单次运动时间：">
+          <el-input
+            v-model="form.classDuration"
+            placeholder="分钟"
+            style="width: 100%"
+          >
+            <template slot="append">分钟</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="教室名称：" prop="classroomName" required>
           <el-input v-model="form.classroomName" placeholder="请输入教室名称" />
         </el-form-item>
-        <el-form-item label="课程时长" prop="classDuration">
-          <el-input-number
-            v-model="form.classDuration"
-            :min="15"
-            :max="180"
-            :step="15"
-            placeholder="请输入课程时长"
-            style="width: 100%"
-          />
-          <div class="form-tip">单位：分钟</div>
+        <el-form-item label="课时配置：" prop="classScheduleConfig" required>
+          <el-select v-model="form.classScheduleConfig" placeholder="请选择课时配置" style="width: 100%">
+            <el-option label="上午班" value="上午班" />
+            <el-option label="下午班" value="下午班" />
+            <el-option label="全天班" value="全天班" />
+            <el-option label="晚班" value="晚班" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="预约上限" prop="reservationLimit">
-          <el-input-number
-            v-model="form.reservationLimit"
-            :min="1"
-            :max="100"
-            placeholder="请输入预约上限"
-            style="width: 100%"
-          />
-          <div class="form-tip">单位：人</div>
+        <el-form-item label="预约人数上限：" prop="reservationLimit" required>
+          <el-select v-model="form.reservationLimit" placeholder="请选择人数" style="width: 100%">
+            <el-option label="6" :value="6" />
+            <el-option label="10" :value="10" />
+            <el-option label="15" :value="15" />
+            <el-option label="20" :value="20" />
+            <el-option label="30" :value="30" />
+            <el-option label="50" :value="50" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="教室编码：">
+          <el-input v-model="form.classroomCode" disabled placeholder="首次保存成功后将自动创建" />
+        </el-form-item>
+        <el-form-item label="状态：" prop="status" required>
+          <el-radio-group v-model="form.status">
+            <el-radio label="已上架">已上架</el-radio>
+            <el-radio label="已下架">已下架</el-radio>
+            <el-radio label="维护中">维护中</el-radio>
+          </el-radio-group>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -198,8 +237,11 @@ export default {
         id: undefined,
         exerciseType: '',
         classroomName: '',
-        classDuration: 60,
-        reservationLimit: 20
+        classDuration: '',
+        classScheduleConfig: '',
+        reservationLimit: 6,
+        classroomCode: '',
+        status: '已下架'
       },
       // 表单验证规则
       rules: {
@@ -209,11 +251,14 @@ export default {
         classroomName: [
           { required: true, message: '请输入教室名称', trigger: 'blur' }
         ],
-        classDuration: [
-          { required: true, message: '请输入课程时长', trigger: 'blur' }
+        classScheduleConfig: [
+          { required: true, message: '请选择课时配置', trigger: 'change' }
         ],
         reservationLimit: [
-          { required: true, message: '请输入预约上限', trigger: 'blur' }
+          { required: true, message: '请选择预约人数上限', trigger: 'change' }
+        ],
+        status: [
+          { required: true, message: '请选择状态', trigger: 'change' }
         ]
       }
     }
@@ -260,8 +305,11 @@ export default {
         id: undefined,
         exerciseType: '',
         classroomName: '',
-        classDuration: 60,
-        reservationLimit: 20
+        classDuration: '',
+        classScheduleConfig: '',
+        reservationLimit: 6,
+        classroomCode: '',
+        status: '已下架'
       }
       this.$nextTick(() => {
         this.$refs.form.clearValidate()
@@ -306,6 +354,25 @@ export default {
       } catch (error) {
         if (error !== 'cancel') {
           console.error(`${action}教室失败:`, error)
+        }
+      }
+    },
+    // 删除教室
+    async handleDelete(row) {
+      try {
+        await this.$confirm('确定要删除该教室吗？删除后将无法恢复！', '警告', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+
+        await deleteClassroom(row.id)
+        this.$message.success('删除成功')
+        this.getList()
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('删除教室失败:', error)
+          this.$message.error('删除失败')
         }
       }
     },

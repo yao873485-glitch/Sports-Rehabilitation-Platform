@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rehabilitation.mapper.FollowupPatientListMapper">
+
+    <resultMap id="FollowupEnrollmentVOMap" type="com.rehabilitation.dto.FollowupEnrollmentVO">
+        <id column="id" property="id"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="gender" property="gender"/>
+        <result column="age" property="age"/>
+        <result column="phone" property="phone"/>
+        <result column="id_card" property="idCard"/>
+        <result column="medical_record_no" property="medicalRecordNo"/>
+        <result column="source" property="source"/>
+        <result column="application_time" property="applicationTime"/>
+        <result column="enrollment_time" property="enrollmentTime"/>
+        <result column="primary_doctor" property="primaryDoctor"/>
+        <result column="health_manager" property="healthManager"/>
+        <result column="followup_team" property="followupTeam"/>
+        <result column="followup_plan_name" property="followupPlanName"/>
+        <result column="followup_project" property="followupProject"/>
+        <result column="followup_status" property="followupStatus"/>
+        <result column="remark" property="remark"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 分页查询随访患者列表 -->
+    <select id="selectFollowupPage" resultMap="FollowupEnrollmentVOMap">
+        SELECT
+            fpl.id,
+            fpl.patient_id,
+            p.name AS patient_name,
+            p.gender,
+            TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) AS age,
+            p.phone,
+            p.id_card,
+            p.medical_record_no,
+            fpl.source,
+            fpl.application_time,
+            fpl.enrollment_time,
+            fpl.primary_doctor,
+            fpl.health_manager,
+            fpl.followup_team,
+            fpl.followup_plan_name,
+            fpl.followup_project,
+            fpl.followup_status,
+            fpl.remark,
+            fpl.created_time
+        FROM followup_patient_list fpl
+        LEFT JOIN patient p ON fpl.patient_id = p.id
+        <where>
+            <if test="query.patientId != null">
+                AND fpl.patient_id = #{query.patientId}
+            </if>
+            <if test="query.followupStatus != null and query.followupStatus != ''">
+                AND fpl.followup_status = #{query.followupStatus}
+            </if>
+            <if test="query.primaryDoctor != null and query.primaryDoctor != ''">
+                AND fpl.primary_doctor LIKE CONCAT('%', #{query.primaryDoctor}, '%')
+            </if>
+            <if test="query.searchKeyword != null and query.searchKeyword != ''">
+                AND (p.name LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                OR p.phone LIKE CONCAT('%', #{query.searchKeyword}, '%')
+                OR p.medical_record_no LIKE CONCAT('%', #{query.searchKeyword}, '%'))
+            </if>
+        </where>
+        ORDER BY fpl.created_time DESC
+    </select>
+
+    <!-- 根据ID查询随访患者详情 -->
+    <select id="selectFollowupById" resultMap="FollowupEnrollmentVOMap">
+        SELECT
+            fpl.id,
+            fpl.patient_id,
+            p.name AS patient_name,
+            p.gender,
+            TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) AS age,
+            p.phone,
+            p.id_card,
+            p.medical_record_no,
+            fpl.source,
+            fpl.application_time,
+            fpl.enrollment_time,
+            fpl.primary_doctor,
+            fpl.health_manager,
+            fpl.followup_team,
+            fpl.followup_plan_name,
+            fpl.followup_project,
+            fpl.followup_status,
+            fpl.remark,
+            fpl.created_time
+        FROM followup_patient_list fpl
+        LEFT JOIN patient p ON fpl.patient_id = p.id
+        WHERE fpl.id = #{id}
+    </select>
+
+    <!-- 根据患者ID查询随访记录 -->
+    <select id="selectByPatientId" resultType="com.rehabilitation.entity.FollowupPatientList">
+        SELECT *
+        FROM followup_patient_list
+        WHERE patient_id = #{patientId}
+        LIMIT 1
+    </select>
+
+</mapper>

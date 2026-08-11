@@ -48,3 +48,20 @@ export function getInstitutions() {
     method: 'get'
   })
 }
+
+// 获取评估执行信息（用于执行弹窗）
+export function getAssessmentExecutionInfo(assessmentPlanId) {
+  return request({
+    url: `/api/assessment-execution/execution-info/${assessmentPlanId}`,
+    method: 'get'
+  })
+}
+
+// 提交评估执行记录
+export function submitAssessmentExecution(data) {
+  return request({
+    url: '/api/assessment-execution/submit',
+    method: 'post',
+    data
+  })
+}

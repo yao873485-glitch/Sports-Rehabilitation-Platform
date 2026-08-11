@@ -1,4 +1,4 @@
-import Vue from 'vue'
+﻿import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Layout from '@/layout/index.vue'
 import { getToken } from '@/utils/auth'
@@ -12,6 +12,19 @@ const routes = [
     component: () => import('@/views/Login.vue'),
     hidden: true,
     meta: { noAuth: true }
+  },
+  {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: () => import('@/views/admin/AdminLogin.vue'),
+    hidden: true,
+    meta: { noAuth: true }
+  },
+  {
+    path: '/admin/applications',
+    name: 'AdminApplications',
+    component: () => import('@/views/admin/AdminApplications.vue'),
+    hidden: true
   },
   {
     path: '/',
@@ -91,7 +104,14 @@ const routes = [
         path: 'config-patient',
         name: 'SchemeConfigPatient',
         component: () => import('@/views/scheme/config-patient.vue'),
-        meta: { title: '患者管理方案配置' },
+        meta: { title: '患者方案配置' },
+        hidden: true
+      },
+      {
+        path: 'patient-view',
+        name: 'PatientView',
+        component: () => import('@/views/scheme/patient-view.vue'),
+        meta: { title: '患者信息查看' },
         hidden: true
       },
       {
@@ -138,10 +158,45 @@ const routes = [
         meta: { title: '运动处方' }
       },
       {
+        path: 'create',
+        name: 'PrescriptionCreate',
+        component: () => import('@/views/prescription/create.vue'),
+        meta: { title: '新增运动处方' },
+        hidden: true
+      },
+      {
         path: 'execution',
         name: 'PrescriptionExecution',
         component: () => import('@/views/prescription/execution.vue'),
         meta: { title: '处方执行' }
+      },
+      {
+        path: 'view',
+        name: 'PrescriptionView',
+        component: () => import('@/views/prescription/view.vue'),
+        meta: { title: '处方详情' },
+        hidden: true
+      },
+      {
+        path: 'edit',
+        name: 'PrescriptionEdit',
+        component: () => import('@/views/prescription/edit.vue'),
+        meta: { title: '编辑处方' },
+        hidden: true
+      },
+      {
+        path: 'execute',
+        name: 'PrescriptionExecute',
+        component: () => import('@/views/prescription/execute.vue'),
+        meta: { title: '执行处方' },
+        hidden: true
+      },
+      {
+        path: 'prescription-list',
+        name: 'PrescriptionListDetail',
+        component: () => import('@/views/prescription/prescription-list.vue'),
+        meta: { title: '处方执行清单' },
+        hidden: true
       }
     ]
   },
@@ -157,10 +212,45 @@ const routes = [
         meta: { title: '评定列表' }
       },
       {
+        path: 'create',
+        name: 'AssessmentCreate',
+        component: () => import('@/views/assessment/create.vue'),
+        meta: { title: '新增评定计划' },
+        hidden: true
+      },
+      {
         path: 'execution',
         name: 'AssessmentExecution',
         component: () => import('@/views/assessment/execution.vue'),
         meta: { title: '评定执行' }
+      },
+      {
+        path: 'view',
+        name: 'AssessmentView',
+        component: () => import('@/views/assessment/view.vue'),
+        meta: { title: '评定详情' },
+        hidden: true
+      },
+      {
+        path: 'edit',
+        name: 'AssessmentEdit',
+        component: () => import('@/views/assessment/edit.vue'),
+        meta: { title: '编辑评定' },
+        hidden: true
+      },
+      {
+        path: 'execute',
+        name: 'AssessmentExecute',
+        component: () => import('@/views/assessment/execute.vue'),
+        meta: { title: '执行评定' },
+        hidden: true
+      },
+      {
+        path: 'assessment-list',
+        name: 'AssessmentListDetail',
+        component: () => import('@/views/assessment/assessment-list.vue'),
+        meta: { title: '评定执行清单' },
+        hidden: true
       }
     ]
   },
@@ -244,6 +334,20 @@ const routes = [
         name: 'FollowupList',
         component: () => import('@/views/followup/list.vue'),
         meta: { title: '随访列表' }
+      },
+      {
+        path: 'detail',
+        name: 'FollowupDetail',
+        component: () => import('@/views/followup/detail.vue'),
+        meta: { title: '随访详情' },
+        hidden: true
+      },
+      {
+        path: 'edit',
+        name: 'FollowupEdit',
+        component: () => import('@/views/followup/edit.vue'),
+        meta: { title: '编辑随访' },
+        hidden: true
       }
     ]
   },
@@ -311,6 +415,13 @@ const routes = [
         component: () => import('@/views/education/content-config.vue'),
         meta: { title: '内容配置' },
         hidden: true
+      },
+      {
+        path: 'content-detail',
+        name: 'ContentDetail',
+        component: () => import('@/views/education/content-detail.vue'),
+        meta: { title: '内容详情' },
+        hidden: true
       }
     ]
   },
@@ -351,27 +462,39 @@ const router = new VueRouter({
   routes
 })
 
-// 路由守卫：登录验证
+// 璺敱瀹堝崼锛氱櫥褰曢獙璇?
 router.beforeEach((to, from, next) => {
   const token = getToken()
 
-  // 白名单：不需要认证的页面
-  const whiteList = ['/login', '/404']
+  // 鐧藉悕鍗曪細涓嶉渶瑕佽璇佺殑椤甸潰
+  const whiteList = ['/login', '/admin/login', '/404']
 
-  // 如果在白名单中，直接放行
+  // 濡傛灉鍦ㄧ櫧鍚嶅崟涓紝鐩存帴鏀捐
   if (whiteList.includes(to.path)) {
     next()
     return
   }
 
-  // 如果没有token，跳转到登录页
+  // 濡傛灉娌℃湁token锛岃烦杞埌鐧诲綍椤?
   if (!token) {
-    next('/login')
+    if (to.path.startsWith('/admin')) {
+      next('/admin/login')
+    } else {
+      next('/login')
+    }
     return
   }
 
-  // 有token，正常访问
+  // 鏈塼oken锛屾甯歌闂?
   next()
 })
 
 export default router
+
+
+
+
+
+
+
+

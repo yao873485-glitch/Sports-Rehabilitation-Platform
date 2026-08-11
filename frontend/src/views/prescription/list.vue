@@ -31,7 +31,7 @@
           <label>处方状态：</label>
           <el-select v-model="queryParams.prescriptionStatus" placeholder="全部" clearable style="width: 150px;">
             <el-option label="全部" value="" />
-            <el-option label="未开始" :value="1" />
+            <el-option label="已创建" :value="1" />
             <el-option label="执行中" :value="2" />
             <el-option label="已完成" :value="3" />
             <el-option label="已结束" :value="4" />
@@ -119,7 +119,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="medicalRecordNo" label="档案号" width="180" align="center" header-align="center" />
+      <el-table-column prop="medicalRecordNumber" label="档案号" width="180" align="center" header-align="center" />
 
       <el-table-column prop="diseaseType" label="病种" width="150" align="center" header-align="center" />
 
@@ -144,13 +144,14 @@
 
       <el-table-column
         label="操作"
-        width="140"
+        width="200"
         fixed="right"
         align="center"
         header-align="center"
         class-name="small-padding fixed-width"
       >
         <template slot-scope="scope">
+          <!-- 查看按钮 - 所有状态都显示 -->
           <el-button
             size="mini"
             type="text"
@@ -158,10 +159,30 @@
           >
             查看
           </el-button>
+
+          <!-- 已创建状态(1)：显示编辑和删除 -->
           <el-button
+            v-if="scope.row.prescriptionStatus == 1"
             size="mini"
             type="text"
-            :disabled="scope.row.prescriptionStatus === '已结束'"
+            @click="handleEdit(scope.row)"
+          >
+            编辑
+          </el-button>
+          <el-button
+            v-if="scope.row.prescriptionStatus == 1"
+            size="mini"
+            type="text"
+            @click="handleDelete(scope.row)"
+          >
+            删除
+          </el-button>
+
+          <!-- 执行中状态(2)：显示结束 -->
+          <el-button
+            v-if="scope.row.prescriptionStatus == 2"
+            size="mini"
+            type="text"
             @click="handleEnd(scope.row)"
           >
             结束
@@ -180,117 +201,29 @@
     />
 
     <!-- 新增运动处方对话框 -->
-    <el-dialog
-      title="新增运动处方"
-      :visible.sync="addVisible"
-      width="600px"
-      append-to-body
-    >
-      <el-form ref="addForm" :model="addForm" :rules="addRules" label-width="120px">
-        <el-form-item label="运动处方名称" prop="prescriptionName">
-          <el-input v-model="addForm.prescriptionName" placeholder="请输入运动处方名称" />
-        </el-form-item>
-        <el-form-item label="患者姓名" prop="patientName">
-          <el-input v-model="addForm.patientName" placeholder="请输入患者姓名" />
-        </el-form-item>
-        <el-form-item label="性别" prop="gender">
-          <el-radio-group v-model="addForm.gender">
-            <el-radio label="男">男</el-radio>
-            <el-radio label="女">女</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="年龄" prop="age">
-          <el-input-number v-model="addForm.age" :min="1" :max="120" />
-        </el-form-item>
-        <el-form-item label="档案号" prop="medicalRecordNumber">
-          <el-input v-model="addForm.medicalRecordNumber" placeholder="请输入档案号" />
-        </el-form-item>
-        <el-form-item label="病种" prop="diseaseType">
-          <el-select v-model="addForm.diseaseType" placeholder="请选择病种" style="width: 100%">
-            <el-option
-              v-for="type in diseaseTypes"
-              :key="type"
-              :label="type"
-              :value="type"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="入组机构" prop="enrollmentInstitution">
-          <el-select v-model="addForm.enrollmentInstitution" placeholder="请选择入组机构" style="width: 100%">
-            <el-option
-              v-for="institution in institutions"
-              :key="institution"
-              :label="institution"
-              :value="institution"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="执行机构" prop="executionInstitution">
-          <el-select v-model="addForm.executionInstitution" placeholder="请选择执行机构" style="width: 100%">
-            <el-option
-              v-for="institution in institutions"
-              :key="institution"
-              :label="institution"
-              :value="institution"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="开方医生" prop="prescribingDoctor">
-          <el-input v-model="addForm.prescribingDoctor" placeholder="请输入开方医生姓名" />
-        </el-form-item>
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="addVisible = false">取 消</el-button>
-        <el-button type="primary" @click="submitAdd">确 定</el-button>
-      </span>
-    </el-dialog>
 
-    <!-- 查看详情对话框 -->
-    <el-dialog
-      title="运动处方详情"
-      :visible.sync="detailVisible"
-      width="800px"
-      append-to-body
-    >
-      <div v-if="currentPrescription" class="prescription-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="处方名称">{{ currentPrescription.prescriptionName }}</el-descriptions-item>
-          <el-descriptions-item label="患者姓名">{{ currentPrescription.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ currentPrescription.gender }}</el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ currentPrescription.age }}岁</el-descriptions-item>
-          <el-descriptions-item label="档案号">{{ currentPrescription.medicalRecordNo }}</el-descriptions-item>
-          <el-descriptions-item label="病种">{{ currentPrescription.diseaseType }}</el-descriptions-item>
-          <el-descriptions-item label="入组机构">{{ currentPrescription.enrollmentInstitution }}</el-descriptions-item>
-          <el-descriptions-item label="执行机构">{{ currentPrescription.executionInstitution }}</el-descriptions-item>
-          <el-descriptions-item label="处方状态">
-            <el-tag :type="getStatusType(currentPrescription.prescriptionStatus)">
-              {{ getStatusText(currentPrescription.prescriptionStatus) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="开方医生">{{ currentPrescription.prescribingDoctor }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间" :span="2">{{ currentPrescription.createdTime }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="detailVisible = false">关 闭</el-button>
-      </span>
-    </el-dialog>
+    <patient-select-dialog
+      :visible.sync="patientSelectVisible"
+      :show-quick-create="false"
+      @confirm="handlePatientConfirm"
+    />
   </div>
 </template>
 
 <script>
 import {
   getPatientExercisePrescriptionList,
-  getPatientExercisePrescriptionDetail,
   endPatientExercisePrescription,
-  executePatientExercisePrescription,
-  addPatientExercisePrescription,
   getDiseaseTypes,
   getInstitutions
 } from '@/api/patient-exercise-prescription'
+import PatientSelectDialog from '@/views/scheme/components/PatientSelectDialog.vue'
 
 export default {
   name: 'PrescriptionList',
+  components: {
+    PatientSelectDialog
+  },
   data() {
     return {
       // 遮罩层
@@ -314,53 +247,8 @@ export default {
         prescribingDoctor: '',
         searchKeyword: ''
       },
-      // 详情弹窗
-      detailVisible: false,
-      currentPrescription: null,
-      // 新增弹窗
-      addVisible: false,
-      // 新增表单
-      addForm: {
-        prescriptionName: '',
-        patientName: '',
-        gender: '男',
-        age: 30,
-        medicalRecordNumber: '',
-        diseaseType: '',
-        enrollmentInstitution: '',
-        executionInstitution: '',
-        prescribingDoctor: ''
-      },
-      // 新增表单验证规则
-      addRules: {
-        prescriptionName: [
-          { required: true, message: '请输入运动处方名称', trigger: 'blur' }
-        ],
-        patientName: [
-          { required: true, message: '请输入患者姓名', trigger: 'blur' }
-        ],
-        gender: [
-          { required: true, message: '请选择性别', trigger: 'change' }
-        ],
-        age: [
-          { required: true, message: '请输入年龄', trigger: 'blur' }
-        ],
-        medicalRecordNumber: [
-          { required: true, message: '请输入档案号', trigger: 'blur' }
-        ],
-        diseaseType: [
-          { required: true, message: '请选择病种', trigger: 'change' }
-        ],
-        enrollmentInstitution: [
-          { required: true, message: '请选择入组机构', trigger: 'change' }
-        ],
-        executionInstitution: [
-          { required: true, message: '请选择执行机构', trigger: 'change' }
-        ],
-        prescribingDoctor: [
-          { required: true, message: '请输入开方医生姓名', trigger: 'blur' }
-        ]
-      }
+      // ??????????
+      patientSelectVisible: false
     }
   },
   created() {
@@ -416,32 +304,31 @@ export default {
       this.handleQuery()
     },
 
-    /** 新增按钮操作 */
+    /** ????????? */
     handleAdd() {
-      this.addVisible = true
-      this.$nextTick(() => {
-        this.$refs.addForm && this.$refs.addForm.resetFields()
-      })
+      this.patientSelectVisible = true
     },
 
-    /** 提交新增 */
-    submitAdd() {
-      this.$refs.addForm.validate(valid => {
-        if (valid) {
-          addPatientExercisePrescription(this.addForm).then(() => {
-            this.$message.success('新增成功')
-            this.addVisible = false
-            this.getList()
-          })
+    /** ??????????*/
+    handlePatientConfirm(patient) {
+      this.patientSelectVisible = false
+      this.$router.push({
+        path: '/prescription/create',
+        query: {
+          patientData: JSON.stringify(patient)
         }
       })
     },
 
     /** 查看详情 */
     handleView(row) {
-      getPatientExercisePrescriptionDetail(row.id).then(response => {
-        this.currentPrescription = response.data
-        this.detailVisible = true
+      // 跳转到处方查看页面
+      this.$router.push({
+        path: '/prescription/view',
+        query: {
+          id: row.id,
+          patientId: row.patientId
+        }
       })
     },
 
@@ -456,6 +343,39 @@ export default {
           this.$message.success('处方已结束')
           this.getList()
         })
+      }).catch(() => {
+        // 用户点击取消，不做任何操作
+      })
+    },
+
+    /** 编辑处方 */
+    handleEdit(row) {
+      // 跳转到编辑页面
+      this.$router.push({
+        path: '/prescription/edit',
+        query: {
+          id: row.id,
+          patientId: row.patientId,
+          schemeId: row.schemeId
+        }
+      })
+    },
+
+    /** 删除处方 */
+    handleDelete(row) {
+      this.$confirm('确认删除该运动处方吗？删除后无法恢复', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // TODO: 调用删除API
+        this.$message.warning('删除功能尚未实现')
+        // deletePatientExercisePrescription(row.id).then(() => {
+        //   this.$message.success('删除成功')
+        //   this.getList()
+        // })
+      }).catch(() => {
+        // 用户点击取消，不做任何操作
       })
     },
 
@@ -475,7 +395,7 @@ export default {
     /** 获取状态文本 */
     getStatusText(status) {
       const statusMap = {
-        1: '未开始',
+        1: '已创建',
         2: '执行中',
         3: '已完成',
         4: '已结束'
